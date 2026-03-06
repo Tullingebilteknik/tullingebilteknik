@@ -22,9 +22,6 @@ interface ContactFormProps {
   compact?: boolean;
 }
 
-const inputClass =
-  "w-full bg-white border border-border text-foreground rounded-lg px-4 py-2.5 text-sm placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/50";
-
 export function ContactForm({ sourcePage = "unknown", compact = false }: ContactFormProps) {
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
@@ -71,59 +68,44 @@ export function ContactForm({ sourcePage = "unknown", compact = false }: Contact
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <div className={compact ? "grid grid-cols-1 sm:grid-cols-2 gap-4" : "space-y-4"}>
-        <div className="space-y-2">
-          <label htmlFor="name" className="text-sm font-medium text-foreground">
-            Namn *
-          </label>
-          <input id="name" name="name" required placeholder="Ditt namn" className={inputClass} />
+    <form onSubmit={handleSubmit} className="space-y-6">
+      <div className={compact ? "grid grid-cols-1 sm:grid-cols-2 gap-6" : "space-y-6"}>
+        <div className="floating-label-group">
+          <input id="name" name="name" required placeholder=" " />
+          <label htmlFor="name">Namn *</label>
         </div>
 
-        <div className="space-y-2">
-          <label htmlFor="phone" className="text-sm font-medium text-foreground">
-            Telefon *
-          </label>
-          <input id="phone" name="phone" type="tel" required placeholder="07X-XXX XX XX" className={inputClass} />
+        <div className="floating-label-group">
+          <input id="phone" name="phone" type="tel" required placeholder=" " />
+          <label htmlFor="phone">Telefon *</label>
         </div>
 
-        <div className="space-y-2">
-          <label htmlFor="email" className="text-sm font-medium text-foreground">
-            E-post
-          </label>
-          <input id="email" name="email" type="email" placeholder="din@email.se" className={inputClass} />
+        <div className="floating-label-group">
+          <input id="email" name="email" type="email" placeholder=" " />
+          <label htmlFor="email">E-post</label>
         </div>
 
-        <div className="space-y-2">
-          <label htmlFor="service_interest" className="text-sm font-medium text-foreground">
-            Tjänst
-          </label>
-          <select
-            id="service_interest"
-            name="service_interest"
-            className={`${inputClass} appearance-none`}
-            defaultValue=""
-          >
+        <div className="floating-label-group">
+          <select id="service_interest" name="service_interest" defaultValue="">
             <option value="" disabled>Välj tjänst (valfritt)</option>
             {services.map((service) => (
               <option key={service} value={service}>{service}</option>
             ))}
           </select>
+          <label htmlFor="service_interest">Tjänst</label>
         </div>
       </div>
 
-      <div className="space-y-2">
-        <label htmlFor="message" className="text-sm font-medium text-foreground">
-          Meddelande *
-        </label>
+      <div className="floating-label-group">
         <textarea
           id="message"
           name="message"
           required
-          placeholder="Beskriv ditt ärende..."
+          placeholder=" "
           rows={compact ? 3 : 5}
-          className={`${inputClass} resize-none`}
+          style={{ resize: "none" }}
         />
+        <label htmlFor="message">Meddelande *</label>
       </div>
 
       {error && <p className="text-sm text-destructive">{error}</p>}
@@ -131,7 +113,7 @@ export function ContactForm({ sourcePage = "unknown", compact = false }: Contact
       <button
         type="submit"
         disabled={loading}
-        className="w-full bg-primary text-white font-heading font-semibold text-sm px-8 py-3 rounded-lg transition-all hover:bg-primary/90 hover:shadow-lg disabled:opacity-50"
+        className="w-full bg-primary text-primary-foreground font-heading font-600 text-sm px-8 py-3 rounded-full transition-all hover:shadow-[0_4px_16px_oklch(0.72_0.12_75/25%)] hover:-translate-y-px disabled:opacity-50"
       >
         {loading ? "Skickar..." : "Skicka förfrågan"}
       </button>

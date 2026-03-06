@@ -4,29 +4,29 @@ import { Phone, Mail, MapPin } from "lucide-react";
 export function Footer() {
   return (
     <footer className="hero-dark noise-overlay relative">
-      {/* Top accent line */}
-      <div className="h-px bg-gradient-to-r from-transparent via-secondary/40 to-transparent" />
+      {/* Top border */}
+      <div className="h-px bg-white/10" />
 
       <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-16">
-        <div className="grid grid-cols-1 gap-10 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid grid-cols-1 gap-10 sm:grid-cols-2 lg:grid-cols-4 lg:divide-x lg:divide-white/5">
           {/* Brand */}
-          <div>
-            <span className="font-heading text-lg font-semibold text-white mb-1 block">
-              Tullinge Bilteknik
+          <div className="lg:pr-8">
+            <span className="font-heading text-lg font-700 tracking-tight text-white block">
+              TULLINGE
             </span>
             <span className="font-mono text-[10px] tracking-[0.3em] uppercase text-white/30 block mb-4">
-              Kvalitet &middot; Precision &middot; Förtroende
+              Bilteknik
             </span>
-            <p className="text-sm text-white/60 leading-relaxed">
+            <p className="text-sm text-white/50 leading-relaxed">
               Din lokala bilverkstad i Tullinge. Vi servar alla bilmärken med kvalitet och
               personlig service.
             </p>
           </div>
 
           {/* Quick Links */}
-          <div>
-            <h3 className="text-sm font-semibold text-white uppercase tracking-wide mb-4">
-              Snabblänkar
+          <div className="lg:px-8">
+            <h3 className="font-mono text-[11px] font-500 text-white/40 uppercase tracking-widest mb-5">
+              Navigation
             </h3>
             <ul className="space-y-3">
               {[
@@ -38,7 +38,7 @@ export function Footer() {
                 <li key={link.href}>
                   <Link
                     href={link.href}
-                    className="text-sm text-white/60 hover:text-white transition-colors"
+                    className="text-sm text-white/50 hover:text-white transition-colors"
                   >
                     {link.label}
                   </Link>
@@ -48,26 +48,26 @@ export function Footer() {
           </div>
 
           {/* Contact */}
-          <div>
-            <h3 className="text-sm font-semibold text-white uppercase tracking-wide mb-4">
+          <div className="lg:px-8">
+            <h3 className="font-mono text-[11px] font-500 text-white/40 uppercase tracking-widest mb-5">
               Kontakt
             </h3>
             <ul className="space-y-3">
               <li className="flex items-start gap-3">
-                <Phone className="h-4 w-4 mt-0.5 text-white/40 shrink-0" />
-                <a href="tel:0812345678" className="text-sm text-white/60 hover:text-white transition-colors">
+                <Phone className="h-4 w-4 mt-0.5 text-white/30 shrink-0" />
+                <a href="tel:0812345678" className="font-mono text-sm text-white/50 hover:text-white transition-colors">
                   08-123 456 78
                 </a>
               </li>
               <li className="flex items-start gap-3">
-                <Mail className="h-4 w-4 mt-0.5 text-white/40 shrink-0" />
-                <a href="mailto:info@tullingebilteknik.se" className="text-sm text-white/60 hover:text-white transition-colors">
+                <Mail className="h-4 w-4 mt-0.5 text-white/30 shrink-0" />
+                <a href="mailto:info@tullingebilteknik.se" className="font-mono text-sm text-white/50 hover:text-white transition-colors">
                   info@tullingebilteknik.se
                 </a>
               </li>
               <li className="flex items-start gap-3">
-                <MapPin className="h-4 w-4 mt-0.5 text-white/40 shrink-0" />
-                <span className="text-sm text-white/60">
+                <MapPin className="h-4 w-4 mt-0.5 text-white/30 shrink-0" />
+                <span className="font-mono text-sm text-white/50">
                   Exempelgatan 1<br />
                   146 30 Tullinge
                 </span>
@@ -76,39 +76,38 @@ export function Footer() {
           </div>
 
           {/* Opening Hours */}
-          <div>
-            <h3 className="text-sm font-semibold text-white uppercase tracking-wide mb-4">
+          <div className="lg:pl-8">
+            <h3 className="font-mono text-[11px] font-500 text-white/40 uppercase tracking-widest mb-5">
               Öppettider
             </h3>
-            <div className="font-mono text-xs">
-              <div className="flex justify-between text-white/60 py-2 border-b border-white/5">
+            <div className="font-mono text-xs space-y-0">
+              <div className="flex justify-between text-white/50 py-2.5 border-b border-white/5">
                 <span>MÅN–FRE</span>
-                <span className="text-white font-medium">07:00–17:00</span>
+                <span className="text-white font-500">07:00–17:00</span>
               </div>
-              <div className="flex justify-between text-white/60 py-2 border-b border-white/5">
+              <div className="flex justify-between text-white/50 py-2.5 border-b border-white/5">
                 <span>LÖRDAG</span>
-                <span className="text-white font-medium">09:00–14:00</span>
+                <span className="text-white font-500">09:00–14:00</span>
               </div>
-              <div className="flex justify-between text-white/60 py-2">
+              <div className="flex justify-between text-white/50 py-2.5">
                 <span>SÖNDAG</span>
-                <span className="text-white font-medium">Stängt</span>
+                <span className="text-white font-500">Stängt</span>
               </div>
             </div>
           </div>
         </div>
 
-        <div className="mt-12 pt-6 border-t border-white/10 flex items-center justify-between">
-          <p className="text-xs text-white/40">
+        <div className="mt-12 pt-6 border-t border-white/5 flex items-center justify-between">
+          <p className="font-mono text-[11px] text-white/30">
             &copy; {new Date().getFullYear()}{" "}
             <Link
               href="/admin/login"
-              className="text-white/40 hover:text-white/60 transition-colors"
+              className="text-white/30 hover:text-white/50 transition-colors"
             >
               Tullinge Bilteknik
             </Link>
-            . Alla rättigheter förbehållna.
           </p>
-          <a href="#" className="text-xs text-white/20 hover:text-white/40 transition-colors">
+          <a href="#" className="font-mono text-[11px] text-white/20 hover:text-white/40 transition-colors">
             &uarr; Till toppen
           </a>
         </div>

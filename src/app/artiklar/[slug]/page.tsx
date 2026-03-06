@@ -56,12 +56,12 @@ export default async function ArticlePage({ params }: Props) {
     <>
       <Header />
       <main>
-        <article className="py-12 sm:py-16 bg-muted">
+        <article className="py-16 sm:py-20 bg-white">
           <div className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8">
             {/* Back link */}
             <Link
               href="/artiklar"
-              className="inline-flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-primary transition-colors mb-8"
+              className="inline-flex items-center gap-2 text-sm font-500 text-muted-foreground hover:text-foreground transition-colors mb-8"
             >
               <ArrowLeft className="h-4 w-4" />
               Tillbaka till artiklar
@@ -69,7 +69,7 @@ export default async function ArticlePage({ params }: Props) {
 
             {/* Cover Image */}
             {article.cover_image && (
-              <div className="relative h-64 sm:h-80 lg:h-96 rounded-lg overflow-hidden mb-8">
+              <div className="relative h-64 sm:h-80 lg:h-96 rounded-xl overflow-hidden mb-8">
                 <Image
                   src={article.cover_image}
                   alt={article.title}
@@ -81,7 +81,7 @@ export default async function ArticlePage({ params }: Props) {
             )}
 
             {/* Date */}
-            <div className="text-sm text-muted-foreground mb-4">
+            <div className="font-mono text-[11px] text-muted-foreground uppercase tracking-widest mb-4">
               {article.published_at
                 ? new Date(article.published_at).toLocaleDateString("sv-SE", {
                     year: "numeric",
@@ -97,7 +97,7 @@ export default async function ArticlePage({ params }: Props) {
             </h1>
 
             {/* Content */}
-            <div className="prose prose-lg max-w-none prose-headings:font-heading prose-headings:font-700 prose-a:text-primary prose-img:rounded-lg prose-strong:text-foreground">
+            <div className="prose prose-lg max-w-none prose-headings:font-heading prose-headings:font-700 prose-a:text-primary prose-img:rounded-xl prose-strong:text-foreground">
               <ReactMarkdown remarkPlugins={[remarkGfm]}>
                 {article.content}
               </ReactMarkdown>

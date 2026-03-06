@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { AnimatePresence, motion } from "framer-motion";
 import { ProgressSteps } from "@/components/ui/progress-steps";
 import { createClient } from "@/lib/supabase/client";
 
@@ -20,11 +21,76 @@ const serviceOptions = [
 
 const steps = ["Fordon", "Tjänst", "Kontakt"];
 
-const inputClass =
-  "w-full bg-white border border-border text-foreground rounded-lg px-4 py-2.5 text-sm placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/50";
+function FloatingInput({
+  label,
+  value,
+  onChange,
+  type = "text",
+  required = false,
+}: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  type?: string;
+  required?: boolean;
+}) {
+  return (
+    <div className="floating-label-group">
+      <input
+        type={type}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder=" "
+        required={required}
+      />
+      <label>{label}{required ? " *" : ""}</label>
+    </div>
+  );
+}
+
+function FloatingTextarea({
+  label,
+  value,
+  onChange,
+  rows = 3,
+}: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  rows?: number;
+}) {
+  return (
+    <div className="floating-label-group">
+      <textarea
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder=" "
+        rows={rows}
+        style={{ resize: "none" }}
+      />
+      <label>{label}</label>
+    </div>
+  );
+}
+
+const slideVariants = {
+  enter: (direction: number) => ({
+    x: direction > 0 ? 60 : -60,
+    opacity: 0,
+  }),
+  center: {
+    x: 0,
+    opacity: 1,
+  },
+  exit: (direction: number) => ({
+    x: direction > 0 ? -60 : 60,
+    opacity: 0,
+  }),
+};
 
 export function DiagnosticWizard() {
   const [step, setStep] = useState(0);
+  const [direction, setDirection] = useState(1);
   const [carBrand, setCarBrand] = useState("");
   const [regNumber, setRegNumber] = useState("");
   const [selectedService, setSelectedService] = useState("");
@@ -35,6 +101,11 @@ export function DiagnosticWizard() {
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState("");
+
+  function goTo(next: number) {
+    setDirection(next > step ? 1 : -1);
+    setStep(next);
+  }
 
   async function handleSubmit() {
     if (!name.trim() || !phone.trim()) {
@@ -72,7 +143,12 @@ export function DiagnosticWizard() {
 
   if (success) {
     return (
-      <div className="text-center py-10">
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+        className="text-center py-10"
+      >
         <div className="success-check mx-auto mb-4" />
         <h3 className="font-heading text-2xl font-700 text-foreground mb-2">
           Tack för din förfrågan
@@ -80,7 +156,7 @@ export function DiagnosticWizard() {
         <p className="text-muted-foreground text-sm">
           Vi återkommer inom 24 timmar.
         </p>
-      </div>
+      </motion.div>
     );
   }
 
@@ -88,166 +164,158 @@ export function DiagnosticWizard() {
     <div className="w-full max-w-2xl mx-auto">
       <ProgressSteps steps={steps} currentStep={step} />
 
-      <div className="mt-10">
-        {/* Step 1: Vehicle */}
-        {step === 0 && (
-          <div className="space-y-4 animate-in fade-in duration-300">
-            <p className="text-sm font-medium text-muted-foreground mb-6">
-              Berätta om ditt fordon (valfritt)
-            </p>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-foreground">
-                  Bilmärke
-                </label>
-                <input
-                  type="text"
+      <div className="mt-10 overflow-hidden">
+        <AnimatePresence mode="wait" custom={direction}>
+          {/* Step 1: Vehicle */}
+          {step === 0 && (
+            <motion.div
+              key="step-0"
+              custom={direction}
+              variants={slideVariants}
+              initial="enter"
+              animate="center"
+              exit="exit"
+              transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
+              className="space-y-6"
+            >
+              <p className="text-sm text-muted-foreground mb-6">
+                Berätta om ditt fordon (valfritt)
+              </p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                <FloatingInput
+                  label="Bilmärke"
                   value={carBrand}
-                  onChange={(e) => setCarBrand(e.target.value)}
-                  placeholder="T.ex. Volvo, BMW, Toyota"
-                  className={inputClass}
+                  onChange={setCarBrand}
                 />
-              </div>
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-foreground">
-                  Registreringsnummer
-                </label>
-                <input
-                  type="text"
+                <FloatingInput
+                  label="Registreringsnummer"
                   value={regNumber}
-                  onChange={(e) => setRegNumber(e.target.value)}
-                  placeholder="ABC 123"
-                  className={`${inputClass} uppercase placeholder:normal-case`}
+                  onChange={setRegNumber}
                 />
               </div>
-            </div>
-            <div className="flex justify-end pt-4">
-              <button
-                onClick={() => setStep(1)}
-                className="font-heading font-semibold text-sm text-primary hover:text-primary/80 transition-colors flex items-center gap-2"
-              >
-                Nästa <span>&rarr;</span>
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* Step 2: Service selection */}
-        {step === 1 && (
-          <div className="animate-in fade-in duration-300">
-            <p className="text-sm font-medium text-muted-foreground mb-6">
-              Vad behöver du hjälp med?
-            </p>
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-              {serviceOptions.map((service) => (
+              <div className="flex justify-end pt-4">
                 <button
-                  key={service}
-                  onClick={() => setSelectedService(service)}
-                  className={`rounded-lg px-4 py-3 text-left border transition-all duration-200 ${
-                    selectedService === service
-                      ? "border-primary bg-primary/5 text-primary shadow-sm shadow-primary/10"
-                      : "border-border bg-white text-muted-foreground hover:text-foreground hover:border-primary/30 hover:bg-primary/[0.02]"
-                  }`}
+                  onClick={() => goTo(1)}
+                  className="font-heading font-600 text-sm text-foreground/60 hover:text-foreground transition-colors flex items-center gap-2"
                 >
-                  <span className="font-heading text-sm font-semibold">{service}</span>
+                  Nästa <span>&rarr;</span>
                 </button>
-              ))}
-            </div>
-            <div className="flex justify-between pt-6">
-              <button
-                onClick={() => setStep(0)}
-                className="font-heading font-semibold text-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-2"
-              >
-                <span>&larr;</span> Tillbaka
-              </button>
-              <button
-                onClick={() => setStep(2)}
-                className="font-heading font-semibold text-sm text-primary hover:text-primary/80 transition-colors flex items-center gap-2"
-              >
-                Nästa <span>&rarr;</span>
-              </button>
-            </div>
-          </div>
-        )}
+              </div>
+            </motion.div>
+          )}
 
-        {/* Step 3: Contact details */}
-        {step === 2 && (
-          <div className="space-y-4 animate-in fade-in duration-300">
-            <p className="text-sm font-medium text-muted-foreground mb-6">
-              Dina kontaktuppgifter
-            </p>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-foreground">
-                  Namn *
-                </label>
-                <input
-                  type="text"
+          {/* Step 2: Service selection */}
+          {step === 1 && (
+            <motion.div
+              key="step-1"
+              custom={direction}
+              variants={slideVariants}
+              initial="enter"
+              animate="center"
+              exit="exit"
+              transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
+            >
+              <p className="text-sm text-muted-foreground mb-6">
+                Vad behöver du hjälp med?
+              </p>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                {serviceOptions.map((service) => (
+                  <button
+                    key={service}
+                    onClick={() => setSelectedService(service)}
+                    className={`rounded-lg px-4 py-3 text-left border transition-all duration-200 ${
+                      selectedService === service
+                        ? "border-primary bg-primary/5 text-foreground shadow-sm"
+                        : "border-border bg-white text-muted-foreground hover:text-foreground hover:border-primary/30"
+                    }`}
+                  >
+                    <span className="font-heading text-sm font-600">{service}</span>
+                  </button>
+                ))}
+              </div>
+              <div className="flex justify-between pt-6">
+                <button
+                  onClick={() => goTo(0)}
+                  className="font-heading font-600 text-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-2"
+                >
+                  <span>&larr;</span> Tillbaka
+                </button>
+                <button
+                  onClick={() => goTo(2)}
+                  className="font-heading font-600 text-sm text-foreground/60 hover:text-foreground transition-colors flex items-center gap-2"
+                >
+                  Nästa <span>&rarr;</span>
+                </button>
+              </div>
+            </motion.div>
+          )}
+
+          {/* Step 3: Contact details */}
+          {step === 2 && (
+            <motion.div
+              key="step-2"
+              custom={direction}
+              variants={slideVariants}
+              initial="enter"
+              animate="center"
+              exit="exit"
+              transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
+              className="space-y-6"
+            >
+              <p className="text-sm text-muted-foreground mb-6">
+                Dina kontaktuppgifter
+              </p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                <FloatingInput
+                  label="Namn"
                   value={name}
-                  onChange={(e) => setName(e.target.value)}
+                  onChange={setName}
                   required
-                  placeholder="Ditt namn"
-                  className={inputClass}
                 />
-              </div>
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-foreground">
-                  Telefon *
-                </label>
-                <input
-                  type="tel"
+                <FloatingInput
+                  label="Telefon"
                   value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
+                  onChange={setPhone}
+                  type="tel"
                   required
-                  placeholder="07X-XXX XX XX"
-                  className={inputClass}
                 />
+                <div className="sm:col-span-2">
+                  <FloatingInput
+                    label="E-post"
+                    value={email}
+                    onChange={setEmail}
+                    type="email"
+                  />
+                </div>
+                <div className="sm:col-span-2">
+                  <FloatingTextarea
+                    label="Meddelande"
+                    value={message}
+                    onChange={setMessage}
+                  />
+                </div>
               </div>
-              <div className="space-y-2 sm:col-span-2">
-                <label className="text-sm font-medium text-foreground">
-                  E-post
-                </label>
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="din@email.se (valfritt)"
-                  className={inputClass}
-                />
-              </div>
-              <div className="space-y-2 sm:col-span-2">
-                <label className="text-sm font-medium text-foreground">
-                  Meddelande
-                </label>
-                <textarea
-                  value={message}
-                  onChange={(e) => setMessage(e.target.value)}
-                  rows={3}
-                  placeholder="Beskriv ditt ärende..."
-                  className={`${inputClass} resize-none`}
-                />
-              </div>
-            </div>
 
-            {error && <p className="text-sm text-destructive">{error}</p>}
+              {error && <p className="text-sm text-destructive">{error}</p>}
 
-            <div className="flex justify-between pt-4">
-              <button
-                onClick={() => setStep(1)}
-                className="font-heading font-semibold text-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-2"
-              >
-                <span>&larr;</span> Tillbaka
-              </button>
-              <button
-                onClick={handleSubmit}
-                disabled={loading}
-                className="inline-flex items-center bg-primary text-white font-heading font-semibold text-sm px-6 py-2.5 rounded-lg transition-all hover:bg-primary/90 hover:shadow-lg disabled:opacity-50"
-              >
-                {loading ? "Skickar..." : "Skicka"}
-              </button>
-            </div>
-          </div>
-        )}
+              <div className="flex justify-between pt-4">
+                <button
+                  onClick={() => goTo(1)}
+                  className="font-heading font-600 text-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-2"
+                >
+                  <span>&larr;</span> Tillbaka
+                </button>
+                <button
+                  onClick={handleSubmit}
+                  disabled={loading}
+                  className="inline-flex items-center bg-primary text-primary-foreground font-heading font-600 text-sm px-8 py-2.5 rounded-full transition-all hover:shadow-[0_4px_16px_oklch(0.72_0.12_75/25%)] hover:-translate-y-px disabled:opacity-50"
+                >
+                  {loading ? "Skickar..." : "Skicka"}
+                </button>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </div>
   );

@@ -1,3 +1,9 @@
+"use client";
+
+import { useRef } from "react";
+import { useGSAP } from "@gsap/react";
+import { gsap, ScrollTrigger } from "@/lib/gsap";
+
 const reasons = [
   {
     num: "01",
@@ -26,53 +32,93 @@ const reasons = [
 ];
 
 export function WhyUs() {
-  return (
-    <section className="py-20 sm:py-28 bg-muted section-angle-top">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="mb-16">
-          <div className="flex items-center gap-4 mb-3">
-            <p className="font-mono text-xs uppercase tracking-widest text-primary shrink-0">
-              Varför välja oss
-            </p>
-            <div className="flex-1 h-px bg-primary/15" />
-          </div>
-          <h2 className="font-heading text-3xl sm:text-4xl font-700 text-foreground">
-            Kvalitet och förtroende sedan dag ett
-          </h2>
-        </div>
+  const sectionRef = useRef<HTMLElement>(null);
+  const cardsRef = useRef<(HTMLDivElement | null)[]>([]);
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-          <div className="space-y-5">
-            {reasons.slice(0, 2).map((reason) => (
-              <ReasonCard key={reason.num} reason={reason} />
-            ))}
+  useGSAP(() => {
+    if (!sectionRef.current) return;
+
+    cardsRef.current.forEach((card) => {
+      if (!card) return;
+
+      const num = card.querySelector(".ghost-num");
+      const content = card.querySelector(".card-content");
+
+      gsap.from(content, {
+        opacity: 0,
+        y: 30,
+        duration: 0.8,
+        ease: "power3.out",
+        scrollTrigger: {
+          trigger: card,
+          start: "top 75%",
+          once: true,
+        },
+      });
+
+      if (num) {
+        gsap.from(num, {
+          scale: 0.8,
+          opacity: 0,
+          duration: 1,
+          ease: "power3.out",
+          scrollTrigger: {
+            trigger: card,
+            start: "top 80%",
+            once: true,
+          },
+        });
+      }
+    });
+  }, { scope: sectionRef });
+
+  return (
+    <section ref={sectionRef} className="py-24 sm:py-32 bg-muted">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div className="lg:grid lg:grid-cols-5 lg:gap-16">
+          {/* Sticky heading — left */}
+          <div className="lg:col-span-2 mb-12 lg:mb-0">
+            <div className="lg:sticky lg:top-[30vh]">
+              <span className="font-mono text-[11px] tracking-[0.2em] uppercase text-muted-foreground">
+                Varför välja oss
+              </span>
+              <h2 className="font-heading text-3xl sm:text-4xl font-700 text-foreground mt-3">
+                Kvalitet sedan dag ett
+              </h2>
+              <div className="w-12 h-0.5 bg-primary mt-6" />
+            </div>
           </div>
-          <div className="space-y-5 sm:mt-8">
-            {reasons.slice(2, 4).map((reason) => (
-              <ReasonCard key={reason.num} reason={reason} />
+
+          {/* Scrolling reason cards — right */}
+          <div className="lg:col-span-3 space-y-8 lg:space-y-16">
+            {reasons.map((reason, index) => (
+              <div
+                key={reason.num}
+                ref={(el) => { cardsRef.current[index] = el; }}
+                className="relative lg:min-h-[40vh] flex items-start"
+              >
+                {/* Ghost number */}
+                <span className="ghost-num absolute -top-4 -left-2 lg:-left-8 font-heading text-[8rem] lg:text-[12rem] font-700 leading-none text-foreground/[0.02] select-none pointer-events-none">
+                  {reason.num}
+                </span>
+
+                {/* Content */}
+                <div className="card-content relative pt-8 lg:pt-12 max-w-md">
+                  <span className="font-mono text-xs tracking-wider text-primary/70 uppercase">
+                    {reason.num}
+                  </span>
+                  <h3 className="font-heading text-xl lg:text-2xl font-600 text-foreground mt-2 mb-3">
+                    {reason.title}
+                  </h3>
+                  <p className="text-muted-foreground leading-relaxed">
+                    {reason.description}
+                  </p>
+                </div>
+              </div>
             ))}
           </div>
         </div>
       </div>
     </section>
-  );
-}
-
-function ReasonCard({ reason }: { reason: typeof reasons[number] }) {
-  return (
-    <div className="reveal relative bg-white rounded-lg p-8 border border-border/50 border-l-2 border-l-primary/40 shadow-sm hover:border-l-secondary hover:shadow-md transition-all duration-300">
-      {/* Ghost number */}
-      <span className="absolute -top-2 -left-1 font-heading text-7xl font-bold text-primary/[0.04] select-none pointer-events-none leading-none">
-        {reason.num}
-      </span>
-      {/* Content */}
-      <div className="relative pl-1 pt-4">
-        <span className="font-mono text-xs tracking-wider text-primary/60 uppercase">{reason.num}</span>
-        <h3 className="font-heading text-lg font-semibold text-foreground mt-1 mb-2">
-          {reason.title}
-        </h3>
-        <p className="text-sm text-muted-foreground leading-relaxed">{reason.description}</p>
-      </div>
-    </div>
   );
 }

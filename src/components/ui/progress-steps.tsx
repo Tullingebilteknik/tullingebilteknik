@@ -1,3 +1,7 @@
+"use client";
+
+import { motion } from "framer-motion";
+
 interface ProgressStepsProps {
   steps: string[];
   currentStep: number;
@@ -35,11 +39,11 @@ export function ProgressSteps({ steps, currentStep }: ProgressStepsProps) {
                 {isCompleted ? "\u2713" : `0${i + 1}`}
               </span>
               <span
-                className={`text-sm font-medium transition-colors ${
+                className={`text-sm font-500 transition-colors ${
                   isActive
-                    ? "text-primary"
+                    ? "text-foreground"
                     : isCompleted
-                      ? "text-primary/50"
+                      ? "text-foreground/50"
                       : "text-muted-foreground/30"
                 }`}
               >
@@ -49,11 +53,14 @@ export function ProgressSteps({ steps, currentStep }: ProgressStepsProps) {
 
             {/* Connector line */}
             {i < steps.length - 1 && (
-              <div className="flex-1 mx-3 h-px relative">
-                <div className="absolute inset-0 bg-muted-foreground/15" />
-                <div
-                  className="absolute inset-y-0 left-0 bg-primary/50 transition-all duration-500"
-                  style={{ width: isCompleted ? "100%" : isActive ? "50%" : "0%" }}
+              <div className="flex-1 mx-3 h-px relative bg-border/50">
+                <motion.div
+                  className="absolute inset-y-0 left-0 bg-primary/50"
+                  initial={false}
+                  animate={{
+                    width: isCompleted ? "100%" : isActive ? "50%" : "0%",
+                  }}
+                  transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
                 />
               </div>
             )}

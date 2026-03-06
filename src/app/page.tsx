@@ -28,23 +28,20 @@ export default async function HomePage() {
         <Testimonials />
 
         {/* Diagnostic Wizard */}
-        <section className="py-20 sm:py-28 bg-muted">
+        <section className="py-24 sm:py-32 bg-white border-t border-border/50">
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             <div className="mb-12">
-              <div className="flex items-center gap-4 mb-3">
-                <p className="font-mono text-xs uppercase tracking-widest text-primary shrink-0">
-                  Boka tid
-                </p>
-                <div className="flex-1 h-px bg-primary/20" />
-              </div>
-              <h2 className="font-heading text-3xl sm:text-4xl font-700 text-foreground">
+              <span className="font-mono text-[11px] tracking-[0.2em] uppercase text-muted-foreground">
+                Boka tid
+              </span>
+              <h2 className="font-heading text-3xl sm:text-4xl font-700 text-foreground mt-3">
                 Beskriv ditt ärende
               </h2>
               <p className="mt-4 text-muted-foreground max-w-xl">
                 Fyll i formuläret nedan så återkommer vi med en tid som passar dig.
               </p>
             </div>
-            <div className="bg-white rounded-xl border border-border shadow-sm p-8 sm:p-10">
+            <div className="max-w-2xl mx-auto">
               <DiagnosticWizard />
             </div>
           </div>

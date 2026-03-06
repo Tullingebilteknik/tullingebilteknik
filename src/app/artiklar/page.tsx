@@ -27,22 +27,22 @@ export default async function ArtiklarPage() {
       <Header />
       <main>
         {/* Hero */}
-        <section className="hero-dark relative py-16 sm:py-20">
+        <section className="hero-dark noise-overlay relative py-20 sm:py-24">
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_60%_50%_at_50%_50%,oklch(0.16_0.015_260),transparent)]" />
           <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 text-center">
-            <p className="text-sm font-semibold tracking-wide text-white/80 uppercase mb-3">
+            <span className="font-mono text-[11px] tracking-[0.2em] uppercase text-white/30">
               Artiklar & tips
-            </p>
-            <h1 className="font-heading text-3xl sm:text-4xl lg:text-5xl font-700 text-white">
+            </span>
+            <h1 className="font-heading text-3xl sm:text-4xl lg:text-5xl font-700 text-white mt-4">
               Kunskap om din bil
             </h1>
-            <p className="mt-4 text-white/70 max-w-2xl mx-auto">
-              Tips, guider och nyheter från våra mekaniker. Håll dig uppdaterad om allt som rör din
-              bil.
+            <p className="mt-4 text-white/50 max-w-2xl mx-auto">
+              Tips, guider och nyheter från våra mekaniker. Håll dig uppdaterad om allt som rör din bil.
             </p>
           </div>
         </section>
 
-        <section className="py-16 sm:py-20 bg-muted">
+        <section className="py-20 sm:py-24 bg-white">
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             {articles && articles.length > 0 ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -50,7 +50,7 @@ export default async function ArtiklarPage() {
                   <Link
                     key={article.id}
                     href={`/artiklar/${article.slug}`}
-                    className="premium-card group rounded-lg overflow-hidden transition-all"
+                    className="group rounded-xl overflow-hidden border border-border/50 transition-all hover:shadow-md hover:border-primary/20"
                   >
                     {article.cover_image ? (
                       <div className="relative h-48 overflow-hidden">
@@ -63,16 +63,16 @@ export default async function ArtiklarPage() {
                       </div>
                     ) : (
                       <div className="h-48 bg-gradient-to-br from-muted to-white flex items-center justify-center">
-                        <span className="font-heading text-3xl text-primary/20">TB</span>
+                        <span className="font-heading text-3xl text-foreground/5">TB</span>
                       </div>
                     )}
                     <div className="p-6">
-                      <div className="text-xs text-muted-foreground mb-3">
+                      <div className="font-mono text-[11px] text-muted-foreground mb-3">
                         {article.published_at
                           ? new Date(article.published_at).toLocaleDateString("sv-SE")
                           : ""}
                       </div>
-                      <h2 className="font-heading text-lg font-semibold text-foreground mb-2 group-hover:text-primary transition-colors">
+                      <h2 className="font-heading text-lg font-600 text-foreground mb-2 group-hover:text-primary transition-colors">
                         {article.title}
                       </h2>
                       <p className="text-sm text-muted-foreground line-clamp-3">{article.excerpt}</p>

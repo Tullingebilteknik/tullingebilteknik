@@ -43,11 +43,13 @@ function ServiceCard({ service }: { service: Service }) {
 
   return (
     <div id={service.slug} className="scroll-mt-24">
-      <div className="premium-card rounded-lg p-8 transition-all hover:shadow-md">
+      <div className="bg-white rounded-xl border border-border/50 p-8 transition-all hover:shadow-md hover:border-primary/20">
         <div className="flex items-start gap-5">
-          <Icon className="h-8 w-8 text-primary shrink-0 mt-1" />
+          <div className="w-12 h-12 rounded-lg bg-primary/5 border border-primary/10 flex items-center justify-center shrink-0">
+            <Icon className="h-5 w-5 text-primary" />
+          </div>
           <div>
-            <h2 className="font-heading text-xl font-semibold text-foreground mb-2">{service.title}</h2>
+            <h2 className="font-heading text-xl font-600 text-foreground mb-2">{service.title}</h2>
             <p className="text-muted-foreground leading-relaxed">{service.long_description}</p>
           </div>
         </div>
@@ -69,15 +71,16 @@ export default async function TjansterPage() {
       <Header />
       <main>
         {/* Hero */}
-        <section className="hero-dark relative py-16 sm:py-20">
+        <section className="hero-dark noise-overlay relative py-20 sm:py-24">
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_60%_50%_at_50%_50%,oklch(0.16_0.015_260),transparent)]" />
           <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 text-center">
-            <p className="text-sm font-semibold tracking-wide text-white/80 uppercase mb-3">
+            <span className="font-mono text-[11px] tracking-[0.2em] uppercase text-white/30">
               Våra tjänster
-            </p>
-            <h1 className="font-heading text-3xl sm:text-4xl lg:text-5xl font-700 text-white">
+            </span>
+            <h1 className="font-heading text-3xl sm:text-4xl lg:text-5xl font-700 text-white mt-4">
               Vi fixar allt med din bil
             </h1>
-            <p className="mt-4 text-white/70 max-w-2xl mx-auto">
+            <p className="mt-4 text-white/50 max-w-2xl mx-auto">
               Oavsett om det gäller enkel service eller komplicerad felsökning — vi har kompetensen
               och utrustningen.
             </p>
@@ -85,7 +88,7 @@ export default async function TjansterPage() {
         </section>
 
         {/* Service List */}
-        <section className="py-16 sm:py-20 bg-muted">
+        <section className="py-20 sm:py-24 bg-muted">
           <div className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8">
             <div className="space-y-5">
               {(services || []).map((service) => (

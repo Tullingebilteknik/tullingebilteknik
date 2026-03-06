@@ -1,17 +1,18 @@
 import type { Metadata } from "next";
-import { Rajdhani, Inter_Tight, JetBrains_Mono } from "next/font/google";
+import { Space_Grotesk, Inter, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 
-const rajdhani = Rajdhani({
+const spaceGrotesk = Space_Grotesk({
   variable: "--font-heading",
   subsets: ["latin"],
   weight: ["500", "600", "700"],
 });
 
-const interTight = Inter_Tight({
+const inter = Inter({
   variable: "--font-body",
   subsets: ["latin"],
-  weight: ["400", "500", "600"],
+  weight: ["300", "400", "500", "600"],
+  style: ["normal", "italic"],
 });
 
 const jetbrainsMono = JetBrains_Mono({
@@ -57,7 +58,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="sv">
-      <body className={`${rajdhani.variable} ${interTight.variable} ${jetbrainsMono.variable} font-sans antialiased`}>
+      <body className={`${spaceGrotesk.variable} ${inter.variable} ${jetbrainsMono.variable} font-sans antialiased`}>
         {children}
       </body>
     </html>
