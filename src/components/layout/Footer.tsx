@@ -107,6 +107,13 @@ export function Footer() {
         <div className="mt-12 border-t border-slate-800 pt-8 text-center">
           <p className="text-sm text-slate-500">
             &copy; {new Date().getFullYear()} Tullinge Bilteknik. Alla rättigheter förbehållna.
+            <Link
+              href="/admin/login"
+              className="text-slate-700 hover:text-slate-500 transition-colors ml-2"
+              aria-label="Admin"
+            >
+              .
+            </Link>
           </p>
         </div>
       </div>

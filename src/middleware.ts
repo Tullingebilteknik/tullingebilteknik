@@ -37,6 +37,8 @@ export async function middleware(request: NextRequest) {
   if (
     request.nextUrl.pathname.startsWith("/admin") &&
     !request.nextUrl.pathname.startsWith("/admin/login") &&
+    !request.nextUrl.pathname.startsWith("/admin/forgot-password") &&
+    !request.nextUrl.pathname.startsWith("/admin/reset-password") &&
     !user
   ) {
     const url = request.nextUrl.clone();

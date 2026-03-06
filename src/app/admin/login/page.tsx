@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -75,6 +76,15 @@ export default function AdminLoginPage() {
           <Button type="submit" disabled={loading} className="w-full" size="lg">
             {loading ? "Loggar in..." : "Logga in"}
           </Button>
+
+          <div className="text-center">
+            <Link
+              href="/admin/forgot-password"
+              className="text-sm text-slate-500 hover:text-amber-600 transition-colors"
+            >
+              Glömt lösenord?
+            </Link>
+          </div>
         </form>
       </div>
     </div>
