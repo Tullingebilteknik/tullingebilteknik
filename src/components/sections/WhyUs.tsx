@@ -1,26 +1,24 @@
-import { Award, Clock, Users, Wrench } from "lucide-react";
-
 const reasons = [
   {
-    icon: Wrench,
+    num: "01",
     title: "Modern utrustning",
     description:
       "Vi investerar kontinuerligt i den senaste diagnosutrustningen för att snabbt och korrekt identifiera problem.",
   },
   {
-    icon: Users,
+    num: "02",
     title: "Erfarna mekaniker",
     description:
       "Vårt team har mångårig erfarenhet av alla bilmärken. Vi löser även de mest komplexa problemen.",
   },
   {
-    icon: Clock,
+    num: "03",
     title: "Snabba ledtider",
     description:
       "Vi värdesätter din tid. De flesta jobb utförs samma dag eller senast dagen efter.",
   },
   {
-    icon: Award,
+    num: "04",
     title: "Kvalitetsgaranti",
     description:
       "Vi använder originaldelar eller kvalitetsdelar med garanti. Ditt förtroende är vår prioritet.",
@@ -29,30 +27,37 @@ const reasons = [
 
 export function WhyUs() {
   return (
-    <section className="py-20 sm:py-28 bg-slate-50">
+    <section className="py-20 sm:py-28 bg-muted">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="text-center max-w-2xl mx-auto mb-16">
-          <p className="text-sm font-semibold uppercase tracking-wider text-amber-500 mb-3">
-            Varför välja oss
-          </p>
-          <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-900">
+        <div className="mb-16">
+          <div className="flex items-center gap-4 mb-3">
+            <p className="font-mono text-xs uppercase tracking-widest text-primary shrink-0">
+              Varför välja oss
+            </p>
+            <div className="flex-1 h-px bg-primary/20" />
+          </div>
+          <h2 className="font-heading text-3xl sm:text-4xl font-700 uppercase text-foreground">
             Kvalitet och förtroende sedan dag ett
           </h2>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-          {reasons.map((reason) => {
-            const Icon = reason.icon;
-            return (
-              <div key={reason.title} className="text-center">
-                <div className="mx-auto mb-5 inline-flex h-14 w-14 items-center justify-center rounded-full bg-amber-100 text-amber-600">
-                  <Icon className="h-7 w-7" />
-                </div>
-                <h3 className="text-lg font-bold text-slate-900 mb-2">{reason.title}</h3>
-                <p className="text-sm text-slate-600 leading-relaxed">{reason.description}</p>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+          {reasons.map((reason) => (
+            <div
+              key={reason.num}
+              className="glass-panel rounded-sm p-6 flex items-start gap-5"
+            >
+              <div className="shrink-0 w-16 h-16 flex items-center justify-center border border-primary/20 rounded-sm">
+                <span className="font-mono text-3xl font-bold text-primary">{reason.num}</span>
               </div>
-            );
-          })}
+              <div>
+                <h3 className="font-heading uppercase text-sm tracking-wider text-foreground font-600 mb-2">
+                  {reason.title}
+                </h3>
+                <p className="text-sm text-muted-foreground leading-relaxed">{reason.description}</p>
+              </div>
+            </div>
+          ))}
         </div>
       </div>
     </section>

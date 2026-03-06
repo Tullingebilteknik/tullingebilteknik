@@ -1,18 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Send, CheckCircle } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 
 const services = [
@@ -49,7 +37,7 @@ export function ContactForm({ sourcePage = "unknown", compact = false }: Contact
       name: formData.get("name") as string,
       email: formData.get("email") as string,
       phone: formData.get("phone") as string,
-      service_interest: formData.get("service_interest") as string || null,
+      service_interest: (formData.get("service_interest") as string) || null,
       message: formData.get("message") as string,
       source_page: sourcePage,
     };
@@ -70,76 +58,88 @@ export function ContactForm({ sourcePage = "unknown", compact = false }: Contact
   if (success) {
     return (
       <div className="flex flex-col items-center justify-center py-8 text-center">
-        <CheckCircle className="h-12 w-12 text-green-500 mb-4" />
-        <h3 className="text-xl font-bold text-slate-900 mb-2">Tack för din förfrågan!</h3>
-        <p className="text-slate-600">Vi återkommer till dig så snart som möjligt.</p>
+        <div className="inline-flex items-center gap-3 mb-4">
+          <span className="status-dot" />
+          <span className="font-mono text-xs tracking-widest text-primary uppercase">
+            Skickat
+          </span>
+        </div>
+        <h3 className="font-heading text-xl font-700 uppercase text-foreground mb-2">
+          Tack för din förfrågan!
+        </h3>
+        <p className="text-sm text-muted-foreground">Vi återkommer till dig så snart som möjligt.</p>
       </div>
     );
   }
+
+  const inputClass =
+    "w-full bg-input border border-border text-foreground rounded-sm px-4 py-2.5 text-sm placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-primary/50";
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className={compact ? "grid grid-cols-1 sm:grid-cols-2 gap-4" : "space-y-4"}>
         <div className="space-y-2">
-          <Label htmlFor="name">Namn *</Label>
-          <Input id="name" name="name" required placeholder="Ditt namn" />
+          <label htmlFor="name" className="font-mono text-xs uppercase tracking-wider text-muted-foreground">
+            Namn *
+          </label>
+          <input id="name" name="name" required placeholder="Ditt namn" className={inputClass} />
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="phone">Telefon *</Label>
-          <Input id="phone" name="phone" type="tel" required placeholder="07X-XXX XX XX" />
+          <label htmlFor="phone" className="font-mono text-xs uppercase tracking-wider text-muted-foreground">
+            Telefon *
+          </label>
+          <input id="phone" name="phone" type="tel" required placeholder="07X-XXX XX XX" className={inputClass} />
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="email">E-post</Label>
-          <Input id="email" name="email" type="email" placeholder="din@email.se" />
+          <label htmlFor="email" className="font-mono text-xs uppercase tracking-wider text-muted-foreground">
+            E-post
+          </label>
+          <input id="email" name="email" type="email" placeholder="din@email.se" className={inputClass} />
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="service_interest">Tjänst</Label>
-          <Select name="service_interest">
-            <SelectTrigger id="service_interest">
-              <SelectValue placeholder="Välj tjänst (valfritt)" />
-            </SelectTrigger>
-            <SelectContent>
-              {services.map((service) => (
-                <SelectItem key={service} value={service}>
-                  {service}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <label htmlFor="service_interest" className="font-mono text-xs uppercase tracking-wider text-muted-foreground">
+            Tjänst
+          </label>
+          <select
+            id="service_interest"
+            name="service_interest"
+            className={`${inputClass} appearance-none`}
+            defaultValue=""
+          >
+            <option value="" disabled>Välj tjänst (valfritt)</option>
+            {services.map((service) => (
+              <option key={service} value={service}>{service}</option>
+            ))}
+          </select>
         </div>
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="message">Meddelande *</Label>
-        <Textarea
+        <label htmlFor="message" className="font-mono text-xs uppercase tracking-wider text-muted-foreground">
+          Meddelande *
+        </label>
+        <textarea
           id="message"
           name="message"
           required
           placeholder="Beskriv ditt ärende..."
           rows={compact ? 3 : 5}
+          className={`${inputClass} resize-none`}
         />
       </div>
 
-      {error && <p className="text-sm text-red-600">{error}</p>}
+      {error && <p className="font-mono text-xs text-destructive">{error}</p>}
 
-      <Button
+      <button
         type="submit"
         disabled={loading}
-        className="w-full bg-amber-500 hover:bg-amber-600 text-slate-900 font-semibold"
-        size="lg"
+        className="w-full bg-primary text-primary-foreground font-heading font-600 uppercase tracking-wider text-sm px-8 py-3 rounded-sm transition-all hover:shadow-[0_0_30px_oklch(0.75_0.15_195_/_25%)] disabled:opacity-50"
       >
-        {loading ? (
-          "Skickar..."
-        ) : (
-          <>
-            <Send className="mr-2 h-4 w-4" />
-            Skicka förfrågan
-          </>
-        )}
-      </Button>
+        {loading ? "Skickar..." : "Skicka förfrågan"}
+      </button>
     </form>
   );
 }
