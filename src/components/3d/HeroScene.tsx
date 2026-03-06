@@ -1,15 +1,33 @@
 "use client";
 
-import { useRef } from "react";
+import { useRef, useEffect } from "react";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { Environment, Float, useGLTF } from "@react-three/drei";
 import type { Group } from "three";
+import * as THREE from "three";
+
+const chromeMaterial = new THREE.MeshPhysicalMaterial({
+  color: new THREE.Color("#c8b89a"),
+  metalness: 1,
+  roughness: 0.08,
+  clearcoat: 1,
+  clearcoatRoughness: 0.1,
+  envMapIntensity: 1.8,
+});
 
 function ChromeWheel() {
   const groupRef = useRef<Group>(null);
   const mouse = useRef({ x: 0, y: 0 });
   const { viewport } = useThree();
   const { scene } = useGLTF("/models/wheel.glb");
+
+  useEffect(() => {
+    scene.traverse((child) => {
+      if (child instanceof THREE.Mesh) {
+        child.material = chromeMaterial;
+      }
+    });
+  }, [scene]);
 
   useFrame((state) => {
     if (!groupRef.current) return;
@@ -25,8 +43,8 @@ function ChromeWheel() {
 
   return (
     <Float speed={1.5} rotationIntensity={0.2} floatIntensity={0.5}>
-      <group ref={groupRef} rotation={[0.3, 0, 0]}>
-        <primitive object={scene} scale={1.5} />
+      <group ref={groupRef} position={[2, 0, 0]} rotation={[0.3, 0, 0]}>
+        <primitive object={scene} scale={0.6} />
       </group>
     </Float>
   );
