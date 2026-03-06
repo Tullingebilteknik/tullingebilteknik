@@ -32,17 +32,13 @@ interface ServiceGridProps {
 
 export function ServiceGrid({ services }: ServiceGridProps) {
   return (
-    <section className="py-20 sm:py-28 bg-background bg-gradient-to-b from-background to-muted/30">
+    <section className="py-20 sm:py-28 bg-white">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        {/* Left-aligned header with line */}
         <div className="mb-16">
-          <div className="flex items-center gap-4 mb-3">
-            <p className="font-mono text-xs uppercase tracking-widest text-primary shrink-0">
-              Våra tjänster
-            </p>
-            <div className="flex-1 h-px bg-primary/20" />
-          </div>
-          <h2 className="font-heading text-3xl sm:text-4xl font-700 uppercase text-foreground">
+          <p className="text-sm font-semibold tracking-wide text-primary uppercase mb-3">
+            Våra tjänster
+          </p>
+          <h2 className="font-heading text-3xl sm:text-4xl font-700 text-foreground">
             Allt din bil behöver — under ett tak
           </h2>
           <p className="mt-4 text-muted-foreground max-w-xl">
@@ -58,10 +54,10 @@ export function ServiceGrid({ services }: ServiceGridProps) {
               <Link
                 key={service.id}
                 href={`/tjanster#${service.slug}`}
-                className="glass-panel corner-marks group relative rounded-sm p-6 transition-all duration-300 hover:border-primary/25 hover:-translate-y-0.5 hover:edge-glow"
+                className="premium-card group rounded-lg p-6 transition-all duration-300"
               >
-                <Icon className="h-8 w-8 text-primary/60 mb-4 transition-all group-hover:text-primary drop-shadow-[0_0_4px_oklch(0.75_0.15_195_/_20%)]" />
-                <h3 className="font-heading font-600 text-foreground mb-2">{service.title}</h3>
+                <Icon className="h-8 w-8 text-primary mb-4 transition-colors group-hover:text-primary/80" />
+                <h3 className="font-heading font-semibold text-foreground mb-2">{service.title}</h3>
                 <p className="text-sm text-muted-foreground leading-relaxed">{service.description}</p>
               </Link>
             );
@@ -71,7 +67,7 @@ export function ServiceGrid({ services }: ServiceGridProps) {
         <div className="mt-12">
           <Link
             href="/tjanster"
-            className="group inline-flex items-center gap-2 font-mono text-xs uppercase tracking-widest text-primary hover:text-primary/80 transition-colors"
+            className="group inline-flex items-center gap-2 text-sm font-medium text-primary hover:text-primary/80 transition-colors"
           >
             Se alla tjänster i detalj
             <span className="transition-transform group-hover:translate-x-1">&rarr;</span>

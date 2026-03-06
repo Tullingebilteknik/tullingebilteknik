@@ -30,13 +30,10 @@ export function WhyUs() {
     <section className="py-20 sm:py-28 bg-muted">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="mb-16">
-          <div className="flex items-center gap-4 mb-3">
-            <p className="font-mono text-xs uppercase tracking-widest text-primary shrink-0">
-              Varför välja oss
-            </p>
-            <div className="flex-1 h-px bg-primary/20" />
-          </div>
-          <h2 className="font-heading text-3xl sm:text-4xl font-700 uppercase text-foreground">
+          <p className="text-sm font-semibold tracking-wide text-primary uppercase mb-3">
+            Varför välja oss
+          </p>
+          <h2 className="font-heading text-3xl sm:text-4xl font-700 text-foreground">
             Kvalitet och förtroende sedan dag ett
           </h2>
         </div>
@@ -45,13 +42,13 @@ export function WhyUs() {
           {reasons.map((reason) => (
             <div
               key={reason.num}
-              className="glass-panel rounded-sm p-6 flex items-start gap-5"
+              className="premium-card rounded-lg p-6 flex items-start gap-5"
             >
-              <div className="shrink-0 w-16 h-16 flex items-center justify-center border border-primary/20 rounded-sm">
+              <div className="shrink-0 w-16 h-16 flex items-center justify-center bg-primary/10 rounded-lg">
                 <span className="font-mono text-3xl font-bold text-primary">{reason.num}</span>
               </div>
               <div>
-                <h3 className="font-heading uppercase text-sm tracking-wider text-foreground font-600 mb-2">
+                <h3 className="font-heading text-base font-semibold text-foreground mb-2">
                   {reason.title}
                 </h3>
                 <p className="text-sm text-muted-foreground leading-relaxed">{reason.description}</p>

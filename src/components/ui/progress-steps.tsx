@@ -9,7 +9,6 @@ export function ProgressSteps({ steps, currentStep }: ProgressStepsProps) {
       {steps.map((label, i) => {
         const isCompleted = i < currentStep;
         const isActive = i === currentStep;
-        const isUpcoming = i > currentStep;
 
         return (
           <div key={label} className="flex items-center flex-1 last:flex-none">
@@ -24,10 +23,10 @@ export function ProgressSteps({ steps, currentStep }: ProgressStepsProps) {
                       : "text-muted-foreground/30"
                 }`}
               >
-                {isCompleted ? "✓" : `0${i + 1}`}
+                {isCompleted ? "\u2713" : `0${i + 1}`}
               </span>
               <span
-                className={`font-mono text-xs uppercase tracking-widest transition-colors ${
+                className={`text-sm font-medium transition-colors ${
                   isActive
                     ? "text-primary"
                     : isCompleted

@@ -27,16 +27,15 @@ export default async function ArtiklarPage() {
       <Header />
       <main>
         {/* Hero */}
-        <section className="scanlines relative bg-background py-16 sm:py-20">
-          <div className="tech-grid absolute inset-0" />
+        <section className="hero-dark relative py-16 sm:py-20">
           <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 text-center">
-            <p className="font-mono text-xs uppercase tracking-widest text-primary mb-3">
+            <p className="text-sm font-semibold tracking-wide text-white/80 uppercase mb-3">
               Artiklar & tips
             </p>
-            <h1 className="font-heading text-3xl sm:text-4xl lg:text-5xl font-700 uppercase text-foreground">
+            <h1 className="font-heading text-3xl sm:text-4xl lg:text-5xl font-700 text-white">
               Kunskap om din bil
             </h1>
-            <p className="mt-4 text-muted-foreground max-w-2xl mx-auto">
+            <p className="mt-4 text-white/70 max-w-2xl mx-auto">
               Tips, guider och nyheter från våra mekaniker. Håll dig uppdaterad om allt som rör din
               bil.
             </p>
@@ -51,7 +50,7 @@ export default async function ArtiklarPage() {
                   <Link
                     key={article.id}
                     href={`/artiklar/${article.slug}`}
-                    className="glass-panel group rounded-sm overflow-hidden transition-all hover:border-primary/25"
+                    className="premium-card group rounded-lg overflow-hidden transition-all"
                   >
                     {article.cover_image ? (
                       <div className="relative h-48 overflow-hidden">
@@ -63,17 +62,17 @@ export default async function ArtiklarPage() {
                         />
                       </div>
                     ) : (
-                      <div className="h-48 bg-gradient-to-br from-muted to-card flex items-center justify-center">
-                        <span className="font-mono text-3xl text-primary/20">TB</span>
+                      <div className="h-48 bg-gradient-to-br from-muted to-white flex items-center justify-center">
+                        <span className="font-heading text-3xl text-primary/20">TB</span>
                       </div>
                     )}
                     <div className="p-6">
-                      <div className="font-mono text-xs text-muted-foreground mb-3">
+                      <div className="text-xs text-muted-foreground mb-3">
                         {article.published_at
                           ? new Date(article.published_at).toLocaleDateString("sv-SE")
                           : ""}
                       </div>
-                      <h2 className="font-heading text-lg font-600 uppercase text-foreground mb-2 group-hover:text-primary transition-colors">
+                      <h2 className="font-heading text-lg font-semibold text-foreground mb-2 group-hover:text-primary transition-colors">
                         {article.title}
                       </h2>
                       <p className="text-sm text-muted-foreground line-clamp-3">{article.excerpt}</p>

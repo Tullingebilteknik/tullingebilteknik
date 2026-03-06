@@ -61,7 +61,7 @@ export default async function ArticlePage({ params }: Props) {
             {/* Back link */}
             <Link
               href="/artiklar"
-              className="inline-flex items-center gap-2 font-mono text-xs uppercase tracking-wider text-muted-foreground hover:text-primary transition-colors mb-8"
+              className="inline-flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-primary transition-colors mb-8"
             >
               <ArrowLeft className="h-4 w-4" />
               Tillbaka till artiklar
@@ -69,7 +69,7 @@ export default async function ArticlePage({ params }: Props) {
 
             {/* Cover Image */}
             {article.cover_image && (
-              <div className="relative h-64 sm:h-80 lg:h-96 rounded-sm overflow-hidden mb-8">
+              <div className="relative h-64 sm:h-80 lg:h-96 rounded-lg overflow-hidden mb-8">
                 <Image
                   src={article.cover_image}
                   alt={article.title}
@@ -81,7 +81,7 @@ export default async function ArticlePage({ params }: Props) {
             )}
 
             {/* Date */}
-            <div className="font-mono text-xs text-muted-foreground mb-4">
+            <div className="text-sm text-muted-foreground mb-4">
               {article.published_at
                 ? new Date(article.published_at).toLocaleDateString("sv-SE", {
                     year: "numeric",
@@ -92,12 +92,12 @@ export default async function ArticlePage({ params }: Props) {
             </div>
 
             {/* Title */}
-            <h1 className="font-heading text-3xl sm:text-4xl font-700 uppercase text-foreground mb-8">
+            <h1 className="font-heading text-3xl sm:text-4xl font-700 text-foreground mb-8">
               {article.title}
             </h1>
 
             {/* Content */}
-            <div className="prose prose-invert prose-lg max-w-none prose-headings:font-heading prose-headings:uppercase prose-headings:font-700 prose-a:text-primary prose-img:rounded-sm prose-strong:text-foreground">
+            <div className="prose prose-lg max-w-none prose-headings:font-heading prose-headings:font-700 prose-a:text-primary prose-img:rounded-lg prose-strong:text-foreground">
               <ReactMarkdown remarkPlugins={[remarkGfm]}>
                 {article.content}
               </ReactMarkdown>

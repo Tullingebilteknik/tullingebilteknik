@@ -16,16 +16,15 @@ export default function KontaktPage() {
       <Header />
       <main>
         {/* Hero */}
-        <section className="scanlines relative bg-background py-16 sm:py-20">
-          <div className="tech-grid absolute inset-0" />
+        <section className="hero-dark relative py-16 sm:py-20">
           <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 text-center">
-            <p className="font-mono text-xs uppercase tracking-widest text-primary mb-3">
+            <p className="text-sm font-semibold tracking-wide text-white/80 uppercase mb-3">
               Kontakta oss
             </p>
-            <h1 className="font-heading text-3xl sm:text-4xl lg:text-5xl font-700 uppercase text-foreground">
+            <h1 className="font-heading text-3xl sm:text-4xl lg:text-5xl font-700 text-white">
               Vi finns här för dig
             </h1>
-            <p className="mt-4 text-muted-foreground max-w-2xl mx-auto">
+            <p className="mt-4 text-white/70 max-w-2xl mx-auto">
               Fyll i formuläret nedan, ring oss eller skicka ett mail. Vi återkommer så snart vi
               kan.
             </p>
@@ -37,8 +36,8 @@ export default function KontaktPage() {
             <div className="grid grid-cols-1 lg:grid-cols-5 gap-12">
               {/* Contact Form */}
               <div className="lg:col-span-3">
-                <div className="glass-panel rounded-sm p-8">
-                  <h2 className="font-heading text-2xl font-700 uppercase text-foreground mb-6">
+                <div className="premium-card rounded-lg p-8">
+                  <h2 className="font-heading text-2xl font-700 text-foreground mb-6">
                     Skicka en förfrågan
                   </h2>
                   <ContactForm sourcePage="kontakt" />
@@ -47,15 +46,15 @@ export default function KontaktPage() {
 
               {/* Contact Info */}
               <div className="lg:col-span-2 space-y-6">
-                <div className="glass-panel rounded-sm p-8">
-                  <h2 className="font-heading text-xl font-700 uppercase text-foreground mb-6">
+                <div className="premium-card rounded-lg p-8">
+                  <h2 className="font-heading text-xl font-700 text-foreground mb-6">
                     Kontaktuppgifter
                   </h2>
                   <ul className="space-y-5">
                     <li className="flex items-start gap-4">
-                      <Phone className="h-5 w-5 text-primary/50 mt-0.5 shrink-0" />
+                      <Phone className="h-5 w-5 text-primary mt-0.5 shrink-0" />
                       <div>
-                        <p className="font-mono text-xs text-muted-foreground uppercase tracking-wider">Telefon</p>
+                        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Telefon</p>
                         <a
                           href="tel:0812345678"
                           className="text-foreground font-medium hover:text-primary transition-colors"
@@ -65,9 +64,9 @@ export default function KontaktPage() {
                       </div>
                     </li>
                     <li className="flex items-start gap-4">
-                      <Mail className="h-5 w-5 text-primary/50 mt-0.5 shrink-0" />
+                      <Mail className="h-5 w-5 text-primary mt-0.5 shrink-0" />
                       <div>
-                        <p className="font-mono text-xs text-muted-foreground uppercase tracking-wider">E-post</p>
+                        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">E-post</p>
                         <a
                           href="mailto:info@tullingebilteknik.se"
                           className="text-foreground font-medium hover:text-primary transition-colors"
@@ -77,9 +76,9 @@ export default function KontaktPage() {
                       </div>
                     </li>
                     <li className="flex items-start gap-4">
-                      <MapPin className="h-5 w-5 text-primary/50 mt-0.5 shrink-0" />
+                      <MapPin className="h-5 w-5 text-primary mt-0.5 shrink-0" />
                       <div>
-                        <p className="font-mono text-xs text-muted-foreground uppercase tracking-wider">Adress</p>
+                        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Adress</p>
                         <p className="text-foreground font-medium">
                           Exempelgatan 1<br />
                           146 30 Tullinge
@@ -87,7 +86,7 @@ export default function KontaktPage() {
                       </div>
                     </li>
                     <li className="pt-4 border-t border-border">
-                      <p className="font-mono text-xs text-muted-foreground uppercase tracking-wider mb-3">Öppettider</p>
+                      <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-3">Öppettider</p>
                       <div className="space-y-1.5 font-mono text-xs">
                         <div className="flex justify-between text-muted-foreground">
                           <span>MÅN–FRE</span>
@@ -107,7 +106,7 @@ export default function KontaktPage() {
                 </div>
 
                 {/* Map */}
-                <div className="glass-panel rounded-sm overflow-hidden">
+                <div className="premium-card rounded-lg overflow-hidden">
                   <iframe
                     title="Tullinge Bilteknik karta"
                     src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d8175.5!2d17.9!3d59.2!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2sTullinge!5e0!3m2!1ssv!2sse!4v1600000000000"
