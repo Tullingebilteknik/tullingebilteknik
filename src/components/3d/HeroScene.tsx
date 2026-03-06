@@ -6,6 +6,15 @@ import { Environment, Float, useGLTF } from "@react-three/drei";
 import type { Group } from "three";
 import * as THREE from "three";
 
+const gunmetalMaterial = new THREE.MeshPhysicalMaterial({
+  color: new THREE.Color("#4a4a50"),
+  metalness: 1,
+  roughness: 0.15,
+  clearcoat: 0.8,
+  clearcoatRoughness: 0.05,
+  envMapIntensity: 2.0,
+});
+
 function ChromeWheel() {
   const groupRef = useRef<Group>(null);
   const mouse = useRef({ x: 0, y: 0 });
@@ -14,11 +23,8 @@ function ChromeWheel() {
 
   useEffect(() => {
     scene.traverse((child) => {
-      if (child instanceof THREE.Mesh && child.material) {
-        const mat = child.material as THREE.MeshStandardMaterial;
-        if (mat.envMapIntensity !== undefined) {
-          mat.envMapIntensity = 2.0;
-        }
+      if (child instanceof THREE.Mesh) {
+        child.material = gunmetalMaterial;
       }
     });
   }, [scene]);
