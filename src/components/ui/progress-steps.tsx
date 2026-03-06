@@ -15,6 +15,15 @@ export function ProgressSteps({ steps, currentStep }: ProgressStepsProps) {
             {/* Step indicator */}
             <div className="flex items-center gap-2 shrink-0">
               <span
+                className={`w-2 h-2 rounded-full transition-all duration-300 ${
+                  isActive
+                    ? "bg-primary scale-125"
+                    : isCompleted
+                      ? "bg-primary/40"
+                      : "bg-muted-foreground/20"
+                }`}
+              />
+              <span
                 className={`font-mono text-xs tracking-wider transition-colors ${
                   isActive
                     ? "text-primary"

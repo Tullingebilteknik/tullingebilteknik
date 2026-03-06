@@ -33,29 +33,51 @@ export function Testimonials() {
     <section className="py-20 sm:py-28 bg-white">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="mb-16">
-          <p className="text-sm font-semibold tracking-wide text-primary uppercase mb-3">
-            Kundrecensioner
-          </p>
+          <div className="flex items-center gap-4 mb-3">
+            <p className="font-mono text-xs uppercase tracking-widest text-primary shrink-0">
+              Kundrecensioner
+            </p>
+            <div className="flex-1 h-px bg-primary/15" />
+          </div>
           <h2 className="font-heading text-3xl sm:text-4xl font-700 text-foreground">
             Vad våra kunder säger
           </h2>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {testimonials.map((t) => (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* Featured testimonial */}
+          <div className="reveal md:col-span-2 premium-card rounded-lg p-10 relative overflow-hidden bg-gradient-to-br from-white to-primary/[0.02]">
+            <span className="absolute -top-2 -left-1 text-6xl font-heading leading-none text-primary/[0.06] select-none pointer-events-none">
+              &ldquo;
+            </span>
+            <StarRating />
+            <p className="mt-4 text-lg text-foreground/80 italic leading-relaxed mb-6">
+              &ldquo;{testimonials[0].text}&rdquo;
+            </p>
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center ring-2 ring-white shadow-sm">
+                <span className="text-sm font-bold text-primary">{testimonials[0].name[0]}</span>
+              </div>
+              <span className="text-sm font-semibold text-foreground">{testimonials[0].name}</span>
+            </div>
+          </div>
+
+          {/* Other testimonials */}
+          {testimonials.slice(1).map((t) => (
             <div
               key={t.id}
-              className="premium-card rounded-lg p-8 relative"
+              className="reveal premium-card rounded-lg p-8 relative overflow-hidden"
             >
+              <span className="absolute -top-2 -left-1 text-6xl font-heading leading-none text-primary/[0.06] select-none pointer-events-none">
+                &ldquo;
+              </span>
               <StarRating />
-
               <p className="mt-4 text-foreground/80 italic leading-relaxed mb-6">
                 &ldquo;{t.text}&rdquo;
               </p>
-
               <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
-                  <span className="text-xs font-semibold text-primary">{t.name[0]}</span>
+                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center ring-2 ring-white shadow-sm">
+                  <span className="text-sm font-bold text-primary">{t.name[0]}</span>
                 </div>
                 <span className="text-sm font-semibold text-foreground">{t.name}</span>
               </div>

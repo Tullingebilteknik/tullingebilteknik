@@ -17,11 +17,11 @@ export function Header() {
   const [open, setOpen] = useState(false);
 
   return (
-    <header className="sticky top-0 z-50 w-full bg-white/95 backdrop-blur-md border-b border-border shadow-sm">
+    <header className="sticky top-0 z-50 w-full bg-white/90 backdrop-blur-lg shadow-[0_1px_3px_oklch(0_0_0/6%)]">
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
         {/* Logo */}
         <Link href="/" className="flex items-center gap-2">
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary">
+          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-br from-primary to-primary/80 shadow-sm">
             <span className="text-sm font-bold text-white">TB</span>
           </div>
           <div className="hidden sm:block">
@@ -47,7 +47,7 @@ export function Header() {
         <div className="flex items-center gap-3">
           <Link
             href="/kontakt"
-            className="hidden sm:inline-flex items-center bg-primary text-white font-heading font-semibold text-sm px-6 py-2.5 rounded-lg transition-all hover:bg-primary/90 shadow-sm"
+            className="hidden sm:inline-flex items-center bg-primary text-white font-heading font-semibold text-sm px-6 py-2.5 rounded-lg transition-all hover:bg-primary/90 shadow-sm active:scale-[0.97] active:shadow-none"
           >
             Boka tid
           </Link>

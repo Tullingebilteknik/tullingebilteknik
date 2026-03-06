@@ -37,14 +37,16 @@ export default async function HomePage() {
                 </p>
                 <div className="flex-1 h-px bg-primary/20" />
               </div>
-              <h2 className="font-heading text-3xl sm:text-4xl font-700 uppercase text-foreground">
+              <h2 className="font-heading text-3xl sm:text-4xl font-700 text-foreground">
                 Beskriv ditt ärende
               </h2>
               <p className="mt-4 text-muted-foreground max-w-xl">
                 Fyll i formuläret nedan så återkommer vi med en tid som passar dig.
               </p>
             </div>
-            <DiagnosticWizard />
+            <div className="bg-white rounded-xl border border-border shadow-sm p-8 sm:p-10">
+              <DiagnosticWizard />
+            </div>
           </div>
         </section>
 

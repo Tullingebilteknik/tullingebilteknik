@@ -143,10 +143,10 @@ export function DiagnosticWizard() {
                 <button
                   key={service}
                   onClick={() => setSelectedService(service)}
-                  className={`premium-card rounded-lg px-4 py-3 text-left transition-all duration-200 ${
+                  className={`rounded-lg px-4 py-3 text-left border transition-all duration-200 ${
                     selectedService === service
-                      ? "border-primary bg-primary/5 text-primary"
-                      : "text-muted-foreground hover:text-foreground hover:border-primary/20"
+                      ? "border-primary bg-primary/5 text-primary shadow-sm shadow-primary/10"
+                      : "border-border bg-white text-muted-foreground hover:text-foreground hover:border-primary/30 hover:bg-primary/[0.02]"
                   }`}
                 >
                   <span className="font-heading text-sm font-semibold">{service}</span>

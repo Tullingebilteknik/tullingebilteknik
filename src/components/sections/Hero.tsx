@@ -2,11 +2,15 @@ import Link from "next/link";
 
 export function Hero() {
   return (
-    <section className="hero-dark relative overflow-hidden">
-      {/* Subtle gradient light */}
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_60%_at_50%_-10%,oklch(0.30_0.06_255),transparent)]" />
+    <section className="hero-dark noise-overlay relative overflow-hidden">
+      {/* Multi-layer gradient mesh */}
+      <div className="absolute inset-0">
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_50%_at_20%_80%,oklch(0.25_0.08_260),transparent)]" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_60%_40%_at_80%_20%,oklch(0.22_0.06_280),transparent)]" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,oklch(0.18_0.04_255),transparent_70%)]" />
+      </div>
 
-      <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-24 sm:py-32 lg:py-40">
+      <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-24 sm:py-32 lg:py-40">
         <div className="max-w-3xl">
           {/* Trust badge */}
           <div className="mb-6 inline-flex items-center gap-2 bg-white/10 rounded-full px-4 py-1.5">
@@ -16,9 +20,12 @@ export function Hero() {
             </span>
           </div>
 
+          {/* Amber accent line */}
+          <div className="w-16 h-0.5 bg-gradient-to-r from-secondary to-secondary/0 mb-6" />
+
           <h1 className="font-heading text-4xl sm:text-5xl lg:text-6xl font-700 tracking-tight text-white leading-[1.1]">
             Bilverkstad med{" "}
-            <span className="text-secondary">kvalitet</span> i fokus
+            <span className="text-gradient-amber">kvalitet</span> i fokus
           </h1>
 
           <p className="mt-6 text-lg sm:text-xl text-white/70 leading-relaxed max-w-2xl">
@@ -30,7 +37,7 @@ export function Hero() {
           <div className="mt-10 flex flex-col sm:flex-row items-start gap-4">
             <Link
               href="/kontakt"
-              className="inline-flex items-center bg-primary text-white font-heading font-semibold text-base px-8 py-3.5 rounded-lg transition-all hover:bg-primary/90 hover:shadow-lg"
+              className="btn-hero inline-flex items-center bg-primary text-white font-heading font-semibold text-base px-8 py-3.5 rounded-lg"
             >
               Boka tid nu
             </Link>
@@ -55,13 +62,16 @@ export function Hero() {
               </div>
               <span>5.0 på Google</span>
             </div>
-            <span className="hidden sm:inline text-white/20">|</span>
+            <span className="hidden sm:inline h-1 w-1 rounded-full bg-secondary/40" />
             <span>Alla bilmärken</span>
-            <span className="hidden sm:inline text-white/20">|</span>
+            <span className="hidden sm:inline h-1 w-1 rounded-full bg-secondary/40" />
             <span>Personlig service</span>
           </div>
         </div>
       </div>
+
+      {/* Bottom fade into next section */}
+      <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-background to-transparent z-10" />
     </section>
   );
 }

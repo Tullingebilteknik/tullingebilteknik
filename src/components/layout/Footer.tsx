@@ -3,17 +3,20 @@ import { Phone, Mail, MapPin } from "lucide-react";
 
 export function Footer() {
   return (
-    <footer className="hero-dark">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-16">
+    <footer className="hero-dark noise-overlay relative">
+      {/* Top accent line */}
+      <div className="h-px bg-gradient-to-r from-transparent via-secondary/40 to-transparent" />
+
+      <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-16">
         <div className="grid grid-cols-1 gap-10 sm:grid-cols-2 lg:grid-cols-4">
           {/* Brand */}
           <div>
-            <span className="font-heading text-lg font-semibold text-white mb-3 block">
+            <span className="font-heading text-lg font-semibold text-white mb-1 block">
               Tullinge Bilteknik
             </span>
-            <p className="text-sm text-white/50 mb-4">
-              Kvalitet. Precision. Förtroende.
-            </p>
+            <span className="font-mono text-[10px] tracking-[0.3em] uppercase text-white/30 block mb-4">
+              Kvalitet &middot; Precision &middot; Förtroende
+            </span>
             <p className="text-sm text-white/60 leading-relaxed">
               Din lokala bilverkstad i Tullinge. Vi servar alla bilmärken med kvalitet och
               personlig service.
@@ -77,16 +80,16 @@ export function Footer() {
             <h3 className="text-sm font-semibold text-white uppercase tracking-wide mb-4">
               Öppettider
             </h3>
-            <div className="space-y-2 font-mono text-xs">
-              <div className="flex justify-between text-white/60">
+            <div className="font-mono text-xs">
+              <div className="flex justify-between text-white/60 py-2 border-b border-white/5">
                 <span>MÅN–FRE</span>
                 <span className="text-white font-medium">07:00–17:00</span>
               </div>
-              <div className="flex justify-between text-white/60">
+              <div className="flex justify-between text-white/60 py-2 border-b border-white/5">
                 <span>LÖRDAG</span>
                 <span className="text-white font-medium">09:00–14:00</span>
               </div>
-              <div className="flex justify-between text-white/60">
+              <div className="flex justify-between text-white/60 py-2">
                 <span>SÖNDAG</span>
                 <span className="text-white font-medium">Stängt</span>
               </div>
@@ -94,7 +97,7 @@ export function Footer() {
           </div>
         </div>
 
-        <div className="mt-12 pt-6 border-t border-white/10 text-center">
+        <div className="mt-12 pt-6 border-t border-white/10 flex items-center justify-between">
           <p className="text-xs text-white/40">
             &copy; {new Date().getFullYear()}{" "}
             <Link
@@ -105,6 +108,9 @@ export function Footer() {
             </Link>
             . Alla rättigheter förbehållna.
           </p>
+          <a href="#" className="text-xs text-white/20 hover:text-white/40 transition-colors">
+            &uarr; Till toppen
+          </a>
         </div>
       </div>
     </footer>
