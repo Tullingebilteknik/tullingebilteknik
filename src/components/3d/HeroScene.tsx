@@ -6,15 +6,6 @@ import { Environment, Float, useGLTF } from "@react-three/drei";
 import type { Group } from "three";
 import * as THREE from "three";
 
-const chromeMaterial = new THREE.MeshPhysicalMaterial({
-  color: new THREE.Color("#c8b89a"),
-  metalness: 1,
-  roughness: 0.08,
-  clearcoat: 1,
-  clearcoatRoughness: 0.1,
-  envMapIntensity: 1.8,
-});
-
 function ChromeWheel() {
   const groupRef = useRef<Group>(null);
   const mouse = useRef({ x: 0, y: 0 });
@@ -23,8 +14,11 @@ function ChromeWheel() {
 
   useEffect(() => {
     scene.traverse((child) => {
-      if (child instanceof THREE.Mesh) {
-        child.material = chromeMaterial;
+      if (child instanceof THREE.Mesh && child.material) {
+        const mat = child.material as THREE.MeshStandardMaterial;
+        if (mat.envMapIntensity !== undefined) {
+          mat.envMapIntensity = 2.0;
+        }
       }
     });
   }, [scene]);
@@ -44,7 +38,7 @@ function ChromeWheel() {
   return (
     <Float speed={1.5} rotationIntensity={0.2} floatIntensity={0.5}>
       <group ref={groupRef} position={[2, 0, 0]} rotation={[0.3, 0, 0]}>
-        <primitive object={scene} scale={0.6} />
+        <primitive object={scene} scale={0.9} />
       </group>
     </Float>
   );
