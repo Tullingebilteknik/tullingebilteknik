@@ -38,8 +38,8 @@ function ChromeWheel() {
     mouse.current.y += (targetY - mouse.current.y) * 0.03;
 
     const t = state.clock.elapsedTime;
-    groupRef.current.rotation.x = mouse.current.y * 0.3 + 0.3 + Math.sin(t * 0.3) * 0.15;
-    groupRef.current.rotation.y = mouse.current.x * 0.3 + Math.sin(t * 0.2) * 0.2;
+    groupRef.current.rotation.x = mouse.current.y * 0.2 + 0.15 + Math.sin(t * 0.3) * 0.1;
+    groupRef.current.rotation.y = mouse.current.x * 0.2 + Math.PI / 2 + Math.sin(t * 0.2) * 0.15;
   });
 
   return (
