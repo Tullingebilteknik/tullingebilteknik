@@ -33,11 +33,11 @@ const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
 };
 
 const imageMap: Record<string, string> = {
-  "ac-service": "/Images/ac-service.webp",
-  "bromsar": "/Images/bromsar.webp",
-  "dack-hjul": "/Images/dack-hjul.webp",
-  "felsökning-diagnostik": "/Images/felsokning-diagnostik.webp",
-  "service-underhall": "/Images/service-underhall.webp",
+  "ac-service": "/images/ac-service.webp",
+  "bromsar": "/images/bromsar.webp",
+  "dack-hjul": "/images/dack-hjul.webp",
+  "felsökning-diagnostik": "/images/felsokning-diagnostik.webp",
+  "service-underhall": "/images/service-underhall.webp",
 };
 
 // Gradient fallbacks for services without photos
