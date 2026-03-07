@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
@@ -31,7 +32,15 @@ const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
   Zap,
 };
 
-// Gradient placeholders until real photos are added
+const imageMap: Record<string, string> = {
+  "ac-service": "/Images/ac-service.webp",
+  "bromsar": "/Images/bromsar.webp",
+  "dack-hjul": "/Images/dack-hjul.webp",
+  "felsökning-diagnostik": "/Images/felsokning-diagnostik.webp",
+  "service-underhall": "/Images/service-underhall.webp",
+};
+
+// Gradient fallbacks for services without photos
 const gradientMap: Record<string, string> = {
   Settings: "from-blue-900/20 to-slate-900/40",
   ShieldCheck: "from-emerald-900/20 to-slate-900/40",
@@ -108,12 +117,22 @@ export function ServiceGrid({ services }: ServiceGridProps) {
                     initial={{ opacity: 0, scale: 1.05 }}
                     animate={{ opacity: 1, scale: 1 }}
                     exit={{ opacity: 0, scale: 0.98 }}
-                    transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
-                    className={`absolute inset-0 bg-gradient-to-br ${gradientMap[activeService.icon] || "from-slate-900/20 to-slate-900/40"} flex items-center justify-center`}
+                    transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] as const }}
+                    className={`absolute inset-0 ${!imageMap[activeService.slug] ? `bg-gradient-to-br ${gradientMap[activeService.icon] || "from-slate-900/20 to-slate-900/40"}` : ""} flex items-center justify-center`}
                   >
-                    <ActiveIcon className="h-24 w-24 text-white/10" />
-                    <div className="absolute bottom-6 left-6 right-6">
-                      <p className="text-sm text-white/60 leading-relaxed">
+                    {imageMap[activeService.slug] ? (
+                      <Image
+                        src={imageMap[activeService.slug]}
+                        alt={activeService.title}
+                        fill
+                        className="object-cover"
+                        sizes="(min-width: 1024px) 40vw, 0px"
+                      />
+                    ) : (
+                      <ActiveIcon className="h-24 w-24 text-white/10" />
+                    )}
+                    <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-6">
+                      <p className="text-sm text-white/80 leading-relaxed">
                         {activeService.description}
                       </p>
                     </div>
