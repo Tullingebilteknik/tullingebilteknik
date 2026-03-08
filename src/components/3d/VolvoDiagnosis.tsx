@@ -30,35 +30,72 @@ function matchesMaterial(matName: string, keywords: string[]): boolean {
 
 type MaterialState = "highlighted" | "ghost" | "ghost-paint" | "default";
 
-function classifyMaterials(
+function classifyMaterial(
   slug: string | null,
-  materialNames: string[]
-): Map<string, MaterialState> {
-  const result = new Map<string, MaterialState>();
+  matName: string
+): MaterialState {
   const normalized = slug?.normalize("NFC") ?? null;
   const isFullService = normalized === "service-underhall";
   const keywords = normalized ? serviceHighlightMap[normalized] || [] : [];
   const hasActive = normalized != null && (isFullService || keywords.length > 0);
 
-  for (const matName of materialNames) {
-    if (!hasActive) {
-      result.set(matName, "default");
-    } else if (isFullService || matchesMaterial(matName, keywords)) {
-      result.set(matName, "highlighted");
-    } else if (matName.includes("Paint")) {
-      result.set(matName, "ghost-paint");
-    } else {
-      result.set(matName, "ghost");
-    }
-  }
-  return result;
+  if (!hasActive) return "default";
+  if (isFullService || matchesMaterial(matName, keywords)) return "highlighted";
+  if (matName.includes("Paint")) return "ghost-paint";
+  return "ghost";
 }
 
-const stateTargets: Record<MaterialState, { opacity: number; emissiveIntensity: number }> = {
-  default:       { opacity: 0.85, emissiveIntensity: 0.0 },
-  highlighted:   { opacity: 1.0,  emissiveIntensity: 0.25 },
-  ghost:         { opacity: 0.08, emissiveIntensity: 0.0 },
-  "ghost-paint": { opacity: 0.12, emissiveIntensity: 0.0 },
+// ─── 4 shared materials (NO cloning = no WebGL Context Lost) ─────────
+const defaultMat = new THREE.MeshPhysicalMaterial({
+  color: new THREE.Color("#c8cdd3"),
+  metalness: 0.3,
+  roughness: 0.6,
+  transparent: true,
+  opacity: 0.85,
+  depthWrite: true,
+});
+
+const ghostMat = new THREE.MeshPhysicalMaterial({
+  color: new THREE.Color("#b0b8c4"),
+  metalness: 0.1,
+  roughness: 0.8,
+  transparent: true,
+  opacity: 0.08,
+  depthWrite: false,
+});
+
+const ghostPaintMat = new THREE.MeshPhysicalMaterial({
+  color: new THREE.Color("#c0c6cc"),
+  metalness: 0.15,
+  roughness: 0.7,
+  transparent: true,
+  opacity: 0.12,
+  depthWrite: false,
+});
+
+const highlightMat = new THREE.MeshPhysicalMaterial({
+  color: new THREE.Color("#e8dcc8"),
+  metalness: 0.45,
+  roughness: 0.3,
+  transparent: true,
+  opacity: 1.0,
+  depthWrite: true,
+  emissive: new THREE.Color("#d4c5a0"),
+  emissiveIntensity: 0.15,
+});
+
+const materialForState: Record<MaterialState, THREE.MeshPhysicalMaterial> = {
+  default: defaultMat,
+  ghost: ghostMat,
+  "ghost-paint": ghostPaintMat,
+  highlighted: highlightMat,
+};
+
+const targetOpacity: Record<MaterialState, number> = {
+  default: 0.85,
+  ghost: 0.08,
+  "ghost-paint": 0.12,
+  highlighted: 1.0,
 };
 
 interface CarModelProps {
@@ -70,10 +107,11 @@ function CarModel({ activeSlug }: CarModelProps) {
   const { scene } = useGLTF(MODEL_PATH, DRACO_PATH);
   const { viewport } = useThree();
   const mouse = useRef({ x: 0, y: 0 });
+  const prevSlugRef = useRef<string | null>(null);
 
-  // Clone materials per unique name & collect mesh metadata
-  const { materialMap, interiorMeshes } = useMemo(() => {
-    const matMap = new Map<string, THREE.MeshPhysicalMaterial>();
+  // Collect mesh metadata (no cloning, just store references)
+  const { meshData, interiorMeshes } = useMemo(() => {
+    const data: { mesh: THREE.Mesh; matName: string }[] = [];
     const intMeshes: THREE.Mesh[] = [];
 
     scene.traverse((child) => {
@@ -81,84 +119,96 @@ function CarModel({ activeSlug }: CarModelProps) {
       const origMat = child.material as THREE.MeshPhysicalMaterial;
       const matName = origMat?.name || "";
 
-      if (!matMap.has(matName)) {
-        const cloned = origMat.clone();
-        cloned.transparent = true;
-        cloned.opacity = 0.85;
-        cloned.userData.originalEmissive = cloned.emissive.clone();
-        cloned.emissiveIntensity = 0.0;
-        cloned.depthWrite = true;
-        cloned.name = matName;
-        matMap.set(matName, cloned);
-      }
-
-      child.material = matMap.get(matName)!;
+      // Set default material immediately
+      child.material = defaultMat;
 
       if (matchesMaterial(matName, hiddenKeywords)) {
         child.visible = false;
         intMeshes.push(child);
       }
+
+      data.push({ mesh: child, matName });
     });
 
-    return { materialMap: matMap, interiorMeshes: intMeshes };
+    return { meshData: data, interiorMeshes: intMeshes };
   }, [scene]);
 
   // GSAP-animated highlight transitions
   useEffect(() => {
-    const classification = classifyMaterials(activeSlug, Array.from(materialMap.keys()));
+    const isFirstRender = prevSlugRef.current === null && activeSlug === null;
+    prevSlugRef.current = activeSlug;
 
-    // Kill all running tweens
-    materialMap.forEach((mat) => gsap.killTweensOf(mat));
+    // Kill running tweens on shared materials
+    gsap.killTweensOf(defaultMat);
+    gsap.killTweensOf(ghostMat);
+    gsap.killTweensOf(ghostPaintMat);
+    gsap.killTweensOf(highlightMat);
 
-    materialMap.forEach((mat, matName) => {
-      const state = classification.get(matName) || "default";
-      const t = stateTargets[state];
+    if (isFirstRender) {
+      // First render: just assign default material, no animation
+      return;
+    }
 
-      mat.depthWrite = state === "highlighted" || state === "default";
+    // Capture current opacity to use as animation start point
+    const currentOpacity = defaultMat.opacity;
 
-      // Set emissive color: soft glow for highlighted, restore original otherwise
-      if (state === "highlighted") {
-        mat.emissive.set("#aabbcc");
-      } else {
-        mat.emissive.copy(mat.userData.originalEmissive);
-      }
+    // Reset all shared materials to current visual state (seamless start)
+    ghostMat.opacity = currentOpacity;
+    ghostPaintMat.opacity = currentOpacity;
+    highlightMat.opacity = currentOpacity;
+    highlightMat.emissiveIntensity = 0;
 
-      gsap.to(mat, {
-        opacity: t.opacity,
-        emissiveIntensity: t.emissiveIntensity,
-        duration: 0.45,
-        ease: "power2.out",
-        overwrite: "auto",
-      });
+    // Assign correct material to each mesh
+    meshData.forEach(({ mesh, matName }) => {
+      if (matchesMaterial(matName, hiddenKeywords)) return; // skip interior
+      const state = classifyMaterial(activeSlug, matName);
+      mesh.material = materialForState[state];
+      mesh.material.depthWrite = state === "highlighted" || state === "default";
     });
 
-    // Handle Interior visibility (show only when highlighted)
+    // Handle Interior visibility
     interiorMeshes.forEach((mesh) => {
-      const matName = (mesh.material as THREE.Material).name;
-      const state = classification.get(matName);
+      const matName = meshData.find((d) => d.mesh === mesh)?.matName || "";
+      const state = classifyMaterial(activeSlug, matName);
 
-      if (state === "highlighted" && !mesh.visible) {
+      if (state === "highlighted") {
         mesh.visible = true;
-        (mesh.material as THREE.MeshPhysicalMaterial).opacity = 0;
-        gsap.to(mesh.material, {
-          opacity: 1.0,
-          duration: 0.45,
-          ease: "power2.out",
-        });
-      } else if (state !== "highlighted" && mesh.visible) {
-        gsap.to(mesh.material, {
-          opacity: 0,
-          duration: 0.3,
-          ease: "power2.in",
-          onComplete: () => { mesh.visible = false; },
-        });
+        mesh.material = highlightMat;
+      } else {
+        mesh.visible = false;
       }
+    });
+
+    // Animate shared materials from current opacity to their targets
+    gsap.to(defaultMat, {
+      opacity: targetOpacity.default,
+      duration: 0.45,
+      ease: "power2.out",
+    });
+    gsap.to(ghostMat, {
+      opacity: targetOpacity.ghost,
+      duration: 0.45,
+      ease: "power2.out",
+    });
+    gsap.to(ghostPaintMat, {
+      opacity: targetOpacity["ghost-paint"],
+      duration: 0.45,
+      ease: "power2.out",
+    });
+    gsap.to(highlightMat, {
+      opacity: targetOpacity.highlighted,
+      emissiveIntensity: 0.15,
+      duration: 0.45,
+      ease: "power2.out",
     });
 
     return () => {
-      materialMap.forEach((mat) => gsap.killTweensOf(mat));
+      gsap.killTweensOf(defaultMat);
+      gsap.killTweensOf(ghostMat);
+      gsap.killTweensOf(ghostPaintMat);
+      gsap.killTweensOf(highlightMat);
     };
-  }, [activeSlug, materialMap, interiorMeshes]);
+  }, [activeSlug, meshData, interiorMeshes]);
 
   // Gentle mouse-follow rotation
   useFrame((state) => {
