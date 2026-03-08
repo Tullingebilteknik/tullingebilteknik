@@ -51,8 +51,8 @@ function createAnimatableMaterial(orig: THREE.MeshPhysicalMaterial): THREE.MeshP
     color: orig.color.clone(),
     metalness: orig.metalness,
     roughness: orig.roughness,
-    clearcoat: orig.clearcoat,
-    clearcoatRoughness: orig.clearcoatRoughness,
+    clearcoat: orig.clearcoat ?? 0,
+    clearcoatRoughness: orig.clearcoatRoughness ?? 0,
     transparent: true,
     opacity: 0.85,
     depthWrite: true,
@@ -111,7 +111,7 @@ function CarModel({ activeSlug }: CarModelProps) {
       data.push({ mesh: child, matName });
     });
 
-    console.log("Material names:", Array.from(matMap.keys()));
+    console.log("Material names:", Array.from(matMap.keys()).join(", "));
     return { materialMap: matMap, interiorMeshes: intMeshes, meshData: data };
   }, [scene]);
 

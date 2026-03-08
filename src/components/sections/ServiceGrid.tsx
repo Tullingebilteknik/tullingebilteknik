@@ -72,7 +72,7 @@ export function ServiceGrid({ services }: ServiceGridProps) {
           </ScrollReveal>
 
           {/* Desktop: Service list with 3D background */}
-          <ScrollReveal className="hidden lg:block max-w-xl bg-white/80 backdrop-blur-sm rounded-2xl px-6 py-2" stagger={0.08}>
+          <ScrollReveal className="hidden lg:block max-w-xl bg-white/40 backdrop-blur-sm rounded-2xl px-6 py-2" stagger={0.08}>
             {services.map((service, index) => {
               const Icon = iconMap[service.icon] || Settings;
               const num = String(index + 1).padStart(2, "0");
