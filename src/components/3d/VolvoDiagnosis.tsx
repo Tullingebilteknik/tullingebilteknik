@@ -8,31 +8,17 @@ import * as THREE from "three";
 const MODEL_PATH = "/models/2023_volvo_xc60.glb";
 const DRACO_PATH = "/draco/gltf/";
 
-// Per-service highlight colors for visual distinction
-const serviceColors: Record<string, string> = {
-  "service-underhall": "#c9a84c",       // Gold — full service
-  "bromsar": "#e63946",                 // Red — brakes
-  "dack-hjul": "#c9a84c",              // Gold — wheels
-  "ac-service": "#48cae4",             // Light blue — cooling/AC
-  "felsökning-diagnostik": "#06d6a0",  // Green — diagnostics
-  "besiktningsförberedelse": "#c9a84c", // Gold — inspection
-  "oljebyte": "#f4a261",               // Amber — oil
-  "avgassystem": "#adb5bd",            // Silver — exhaust
-  "koppling-vaxellada": "#f4a261",     // Amber — drivetrain
-  "elektronik-elsystem": "#06d6a0",    // Green — electronics
-};
-
-// Semantically correct material mappings per service
+// Material mappings per service (best-fit given material-based grouping in GLB)
 const serviceHighlightMap: Record<string, string[]> = {
-  "service-underhall": ["Carro_Pintura", "Carro_Cromado", "Carro_Plastico_Brilho", "Carro_Vidros2", "Carro_Vidros2_1"],
-  "bromsar": ["Carro_Disco", "Carro_Roda", "Carro_Roda_1"],
+  // service-underhall uses special "all visible" flag — not listed here
+  "bromsar": ["Carro_Disco"],
   "dack-hjul": ["Carro_Pneu", "Carro_Roda", "Carro_Roda_1"],
-  "ac-service": ["Carro_Metal_Farol", "Carro_Metal_Farol_1", "Carro_Refletor_Farol", "Carro_Refletor_Farol_1", "Carro_Cromado"],
-  "felsökning-diagnostik": ["Carro_Metal_Farol", "Carro_Metal_Farol_1", "Carro_Refletor_Farol", "Carro_Refletor_Farol_1", "Carro_Espelhos", "Carro_Painel", "Carro_Vermelho_1", "Carro_Vermelho_2", "Carro_Vermelho_3"],
-  "besiktningsförberedelse": ["Carro_Refletor_Farol", "Carro_Refletor_Farol_1", "Carro_Metal_Farol", "Carro_Metal_Farol_1", "Carro_Vermelho_1", "Carro_Vermelho_2", "Carro_Vermelho_3", "Carro_Vidros2", "Carro_Vidros2_1", "Carro_Espelhos", "Carro_Disco", "Carro_Pneu", "Carro_Roda", "Carro_Roda_1"],
+  "ac-service": ["Carro_Cromado", "Carro_Plastico_Brilho", "Carro_Plastico_1"],
+  "felsökning-diagnostik": ["Carro_Painel", "Carro_Metal_Farol", "Carro_Metal_Farol_1", "Carro_Refletor_Farol", "Carro_Refletor_Farol_1", "Carro_Vermelho_1", "Carro_Vermelho_2", "Carro_Vermelho_3", "Carro_Espelhos"],
+  "besiktningsförberedelse": ["Carro_Pintura", "Carro_Refletor_Farol", "Carro_Refletor_Farol_1", "Carro_Metal_Farol", "Carro_Metal_Farol_1", "Carro_Vermelho_1", "Carro_Vermelho_2", "Carro_Vermelho_3", "Carro_Vidros2", "Carro_Vidros2_1", "Carro_Espelhos", "Carro_Disco", "Carro_Pneu", "Carro_Roda", "Carro_Roda_1"],
   "oljebyte": ["Carro_Metal_Preto", "Carro_Plastico_1"],
-  "avgassystem": ["Carro_Vermelho_1", "Carro_Vermelho_2", "Carro_Vermelho_3", "Carro_Metal_Preto"],
-  "koppling-vaxellada": ["Carro_Metal_Preto", "Carro_Disco"],
+  "avgassystem": ["Carro_Metal_Preto", "Carro_Cromado"],
+  "koppling-vaxellada": ["Carro_Metal_Preto", "Carro_Disco", "Carro_Plastico_1"],
   "elektronik-elsystem": ["Carro_Metal_Farol", "Carro_Metal_Farol_1", "Carro_Refletor_Farol", "Carro_Refletor_Farol_1", "Carro_Vermelho_1", "Carro_Vermelho_2", "Carro_Vermelho_3", "Carro_Espelhos", "Carro_Painel"],
 };
 
@@ -43,16 +29,15 @@ const hiddenMaterials = new Set([
   "Carro_Interno2_8", "Carro_Interno2_9", "Carro_Painel",
 ]);
 
-const ghostMaterial = new THREE.MeshPhysicalMaterial({
-  color: new THREE.Color("#9ca3af"),
-  metalness: 0.3,
-  roughness: 0.6,
+// Sketch material — faint "pencil sketch" look for default state
+const sketchMaterial = new THREE.MeshPhysicalMaterial({
+  color: new THREE.Color("#b0b8c4"),
+  metalness: 0.1,
+  roughness: 0.8,
   transparent: true,
-  opacity: 0.15,
+  opacity: 0.05,
   depthWrite: false,
 });
-
-const defaultHighlightColor = new THREE.Color("#c9a84c");
 
 interface VolvoModelProps {
   activeSlug: string | null;
@@ -69,7 +54,7 @@ function VolvoModel({ activeSlug }: VolvoModelProps) {
     const data: {
       mesh: THREE.Mesh;
       originalMatName: string;
-      ghost: THREE.MeshPhysicalMaterial;
+      sketch: THREE.MeshPhysicalMaterial;
       highlight: THREE.MeshPhysicalMaterial;
       isHiddenByDefault: boolean;
     }[] = [];
@@ -81,27 +66,28 @@ function VolvoModel({ activeSlug }: VolvoModelProps) {
         if (isHidden) {
           child.visible = false;
         }
-        const ghost = ghostMaterial.clone();
+        const sketch = sketchMaterial.clone();
         const highlight = new THREE.MeshPhysicalMaterial({
-          color: defaultHighlightColor,
-          metalness: 0.6,
-          roughness: 0.25,
+          color: new THREE.Color("#d4dbe3"),
+          metalness: 0.4,
+          roughness: 0.35,
           transparent: true,
-          opacity: 0.85,
-          emissive: defaultHighlightColor,
-          emissiveIntensity: 0.6,
+          opacity: 0.90,
+          depthWrite: true,
+          emissive: new THREE.Color("#ffffff"),
+          emissiveIntensity: 0.08,
         });
-        data.push({ mesh: child, originalMatName, ghost, highlight, isHiddenByDefault: isHidden });
+        data.push({ mesh: child, originalMatName, sketch, highlight, isHiddenByDefault: isHidden });
       }
     });
     return data;
   }, [scene]);
 
-  // Apply ghost material to visible meshes on mount
+  // Apply sketch material to visible meshes on mount
   useEffect(() => {
-    meshData.forEach(({ mesh, ghost, isHiddenByDefault }) => {
+    meshData.forEach(({ mesh, sketch, isHiddenByDefault }) => {
       if (!isHiddenByDefault) {
-        mesh.material = ghost;
+        mesh.material = sketch;
       }
     });
   }, [meshData]);
@@ -109,29 +95,25 @@ function VolvoModel({ activeSlug }: VolvoModelProps) {
   // Update highlights based on active service
   useEffect(() => {
     const normalizedSlug = activeSlug?.normalize("NFC") ?? null;
+    const isFullService = normalizedSlug === "service-underhall";
     const patterns = normalizedSlug ? serviceHighlightMap[normalizedSlug] || [] : [];
-    const colorHex = normalizedSlug ? serviceColors[normalizedSlug] || "#c9a84c" : "#c9a84c";
-    const hlColor = new THREE.Color(colorHex);
+    const hasActiveService = normalizedSlug && (isFullService || patterns.length > 0);
 
-    meshData.forEach(({ mesh, originalMatName, ghost, highlight, isHiddenByDefault }) => {
-      const isHighlighted = patterns.includes(originalMatName);
+    meshData.forEach(({ mesh, originalMatName, sketch, highlight, isHiddenByDefault }) => {
+      const isHighlighted = hasActiveService &&
+        (isFullService ? !isHiddenByDefault : patterns.includes(originalMatName));
 
       if (isHighlighted) {
-        // Show hidden meshes (like Painel) when they should be highlighted
         mesh.visible = true;
-        highlight.color.copy(hlColor);
-        highlight.emissive.copy(hlColor);
         mesh.material = highlight;
-      } else if (normalizedSlug && patterns.length > 0) {
-        // Hide meshes that are hidden by default, dim others
+      } else if (hasActiveService) {
         mesh.visible = !isHiddenByDefault;
-        ghost.opacity = 0.06;
-        mesh.material = ghost;
+        sketch.opacity = 0.03;
+        mesh.material = sketch;
       } else {
-        // No service active — show ghost, hide hidden meshes
         mesh.visible = !isHiddenByDefault;
-        ghost.opacity = 0.15;
-        mesh.material = ghost;
+        sketch.opacity = 0.05;
+        mesh.material = sketch;
       }
     });
   }, [activeSlug, meshData]);
@@ -169,9 +151,9 @@ export default function VolvoDiagnosisScene({ activeSlug }: VolvoDiagnosisSceneP
       camera={{ position: [6, 1.5, 6], fov: 35 }}
       style={{ background: "transparent" }}
     >
-      <ambientLight intensity={0.4} />
-      <directionalLight position={[5, 5, 5]} intensity={0.3} />
-      <directionalLight position={[-3, 2, -2]} intensity={0.15} />
+      <ambientLight intensity={0.5} />
+      <directionalLight position={[5, 5, 5]} intensity={0.2} />
+      <directionalLight position={[-3, 2, -2]} intensity={0.1} />
       <Environment preset="studio" />
       <VolvoModel activeSlug={activeSlug} />
     </Canvas>
