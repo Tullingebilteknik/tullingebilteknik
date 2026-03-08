@@ -8,21 +8,104 @@ import * as THREE from "three";
 const MODEL_PATH = "/models/2023_volvo_xc60.glb";
 const DRACO_PATH = "/draco/gltf/";
 
-// Material mappings per service (best-fit given material-based grouping in GLB)
-const serviceHighlightMap: Record<string, string[]> = {
-  // service-underhall uses special "all visible" flag — not listed here
-  "bromsar": ["Carro_Disco"],
-  "dack-hjul": ["Carro_Pneu", "Carro_Roda", "Carro_Roda_1"],
-  "ac-service": ["Carro_Cromado", "Carro_Plastico_Brilho", "Carro_Plastico_1"],
-  "felsökning-diagnostik": ["Carro_Painel", "Carro_Metal_Farol", "Carro_Metal_Farol_1", "Carro_Refletor_Farol", "Carro_Refletor_Farol_1", "Carro_Vermelho_1", "Carro_Vermelho_2", "Carro_Vermelho_3", "Carro_Espelhos"],
-  "besiktningsförberedelse": ["Carro_Pintura", "Carro_Refletor_Farol", "Carro_Refletor_Farol_1", "Carro_Metal_Farol", "Carro_Metal_Farol_1", "Carro_Vermelho_1", "Carro_Vermelho_2", "Carro_Vermelho_3", "Carro_Vidros2", "Carro_Vidros2_1", "Carro_Espelhos", "Carro_Disco", "Carro_Pneu", "Carro_Roda", "Carro_Roda_1"],
-  "oljebyte": ["Carro_Metal_Preto", "Carro_Plastico_1"],
-  "avgassystem": ["Carro_Metal_Preto", "Carro_Cromado"],
-  "koppling-vaxellada": ["Carro_Metal_Preto", "Carro_Disco", "Carro_Plastico_1"],
-  "elektronik-elsystem": ["Carro_Metal_Farol", "Carro_Metal_Farol_1", "Carro_Refletor_Farol", "Carro_Refletor_Farol_1", "Carro_Vermelho_1", "Carro_Vermelho_2", "Carro_Vermelho_3", "Carro_Espelhos", "Carro_Painel"],
+// ─── Mesh-level highlight mappings ───────────────────────────────────
+// The GLB groups meshes by material, not by car part. A single material
+// like Carro_Roda includes wheel rims AND door handles. To highlight
+// correctly, we match individual node names (Object_N) where needed,
+// and fall back to material names for materials that are coherent.
+//
+// Node name mapping (Three.js child.name = node name, offset +2 from mesh index):
+//   Carro_Roda_1:  Object_153 (front wheels), Object_154 (rear wheels)
+//   Carro_Metal_Preto: Object_64 (underbody plate), Object_65-68 (4x wheel hubs)
+//   Carro_Disco:  Object_5 (brake discs / undercarriage)
+//   Carro_Pneu:   Object_141 (all tires)
+//   Carro_Roda:   Objects 144-152 (rims + door handles + misc trim)
+//   Carro_Plastico_1: Objects 117-118 (engine cowl / front plastic)
+//   Carro_Plastico: Objects 84-116 (underbody plastic / body trim)
+//   Carro_Cromado: Objects 3-4 (chrome trim strips)
+//   Carro_Metal_Farol/1: Objects 61-63 (headlight housings)
+//   Carro_Refletor_Farol/1: Objects 142-143 (headlight reflectors)
+//   Carro_Vermelho_1/2/3: Objects 155-160 (rear tail lights)
+//   Carro_Espelhos: Object_6 (side mirrors)
+//   Carro_Painel: Object_69 (dashboard)
+//   Carro_Pintura: Objects 70-83 (body paint panels)
+//   Carro_Vidros2/1: Objects 2, 161-164 (windows/glass)
+
+type HighlightRule = {
+  materials?: string[];  // match by material name
+  meshes?: string[];     // match by mesh name (Object_N)
 };
 
-// Interior + dashboard materials to hide from ghost rendering
+const serviceHighlightMap: Record<string, HighlightRule> = {
+  // service-underhall uses special "all visible" flag
+
+  "bromsar": {
+    // Brake discs + wheel rims (actual rim objects at axle positions)
+    materials: ["Carro_Disco", "Carro_Roda_1"],
+  },
+
+  "dack-hjul": {
+    // Tires + actual wheel rims at axle positions + wheel hub caps
+    materials: ["Carro_Pneu", "Carro_Roda_1"],
+    meshes: ["Object_65", "Object_66", "Object_67", "Object_68"], // hub caps (Metal_Preto at wheel positions)
+  },
+
+  "ac-service": {
+    // Front grille area: chrome trim + front plastics + engine cowl
+    materials: ["Carro_Cromado", "Carro_Plastico_1"],
+  },
+
+  "felsökning-diagnostik": {
+    // Dashboard + all lights + mirrors = diagnostic check points
+    materials: [
+      "Carro_Painel", "Carro_Metal_Farol", "Carro_Metal_Farol_1",
+      "Carro_Refletor_Farol", "Carro_Refletor_Farol_1",
+      "Carro_Vermelho_1", "Carro_Vermelho_2", "Carro_Vermelho_3",
+      "Carro_Espelhos",
+    ],
+  },
+
+  "besiktningsförberedelse": {
+    // Broad inspection: body, lights, glass, mirrors, brakes, tires
+    materials: [
+      "Carro_Pintura", "Carro_Vidros2", "Carro_Vidros2_1",
+      "Carro_Refletor_Farol", "Carro_Refletor_Farol_1",
+      "Carro_Metal_Farol", "Carro_Metal_Farol_1",
+      "Carro_Vermelho_1", "Carro_Vermelho_2", "Carro_Vermelho_3",
+      "Carro_Espelhos", "Carro_Disco", "Carro_Pneu", "Carro_Roda_1",
+    ],
+  },
+
+  "oljebyte": {
+    // Engine cowl plastics + underbody plate
+    materials: ["Carro_Plastico_1"],
+    meshes: ["Object_64"], // underbody plate (Metal_Preto)
+  },
+
+  "avgassystem": {
+    // Underbody plate + chrome exhaust tips
+    materials: ["Carro_Cromado"],
+    meshes: ["Object_64"], // underbody plate
+  },
+
+  "koppling-vaxellada": {
+    // Drivetrain: underbody + brake disc/undercarriage + engine cowl
+    materials: ["Carro_Disco", "Carro_Plastico_1"],
+    meshes: ["Object_64"], // underbody plate
+  },
+
+  "elektronik-elsystem": {
+    // All lights + mirrors + dashboard
+    materials: [
+      "Carro_Metal_Farol", "Carro_Metal_Farol_1",
+      "Carro_Refletor_Farol", "Carro_Refletor_Farol_1",
+      "Carro_Vermelho_1", "Carro_Vermelho_2", "Carro_Vermelho_3",
+      "Carro_Espelhos", "Carro_Painel",
+    ],
+  },
+};
+
+// Interior materials to hide from default rendering
 const hiddenMaterials = new Set([
   "Carro_Interno2", "Carro_Interno2_1", "Carro_Interno2_2", "Carro_Interno2_3",
   "Carro_Interno2_4", "Carro_Interno2_5", "Carro_Interno2_6", "Carro_Interno2_7",
@@ -49,11 +132,12 @@ function VolvoModel({ activeSlug }: VolvoModelProps) {
   const { viewport } = useThree();
   const mouse = useRef({ x: 0, y: 0 });
 
-  // Store original material names and create per-mesh materials
+  // Store mesh metadata and create per-mesh materials
   const meshData = useMemo(() => {
     const data: {
       mesh: THREE.Mesh;
-      originalMatName: string;
+      meshName: string;
+      matName: string;
       sketch: THREE.MeshPhysicalMaterial;
       highlight: THREE.MeshPhysicalMaterial;
       isHiddenByDefault: boolean;
@@ -61,8 +145,9 @@ function VolvoModel({ activeSlug }: VolvoModelProps) {
     scene.traverse((child) => {
       if (child instanceof THREE.Mesh) {
         const mat = child.material as THREE.Material;
-        const originalMatName = mat?.name || "";
-        const isHidden = hiddenMaterials.has(originalMatName);
+        const matName = mat?.name || "";
+        const meshName = child.name || "";
+        const isHidden = hiddenMaterials.has(matName);
         if (isHidden) {
           child.visible = false;
         }
@@ -77,7 +162,7 @@ function VolvoModel({ activeSlug }: VolvoModelProps) {
           emissive: new THREE.Color("#ffffff"),
           emissiveIntensity: 0.08,
         });
-        data.push({ mesh: child, originalMatName, sketch, highlight, isHiddenByDefault: isHidden });
+        data.push({ mesh: child, meshName, matName, sketch, highlight, isHiddenByDefault: isHidden });
       }
     });
     return data;
@@ -96,12 +181,17 @@ function VolvoModel({ activeSlug }: VolvoModelProps) {
   useEffect(() => {
     const normalizedSlug = activeSlug?.normalize("NFC") ?? null;
     const isFullService = normalizedSlug === "service-underhall";
-    const patterns = normalizedSlug ? serviceHighlightMap[normalizedSlug] || [] : [];
-    const hasActiveService = normalizedSlug && (isFullService || patterns.length > 0);
+    const rule = normalizedSlug ? serviceHighlightMap[normalizedSlug] : null;
+    const hasActiveService = normalizedSlug != null && (isFullService || rule != null);
 
-    meshData.forEach(({ mesh, originalMatName, sketch, highlight, isHiddenByDefault }) => {
+    const matSet = new Set(rule?.materials || []);
+    const meshSet = new Set(rule?.meshes || []);
+
+    meshData.forEach(({ mesh, meshName, matName, sketch, highlight, isHiddenByDefault }) => {
       const isHighlighted = hasActiveService &&
-        (isFullService ? !isHiddenByDefault : patterns.includes(originalMatName));
+        (isFullService
+          ? !isHiddenByDefault
+          : matSet.has(matName) || meshSet.has(meshName));
 
       if (isHighlighted) {
         mesh.visible = true;
