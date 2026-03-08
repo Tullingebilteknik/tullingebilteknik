@@ -1,8 +1,14 @@
 "use client";
 
-import { useRef } from "react";
+import dynamic from "next/dynamic";
+import { Suspense, useRef } from "react";
 import { useGSAP } from "@gsap/react";
-import { gsap, ScrollTrigger } from "@/lib/gsap";
+import { gsap } from "@/lib/gsap";
+
+const BlueprintCarScene = dynamic(
+  () => import("@/components/3d/BlueprintCar"),
+  { ssr: false }
+);
 
 const reasons = [
   {
@@ -73,8 +79,15 @@ export function WhyUs() {
   }, { scope: sectionRef });
 
   return (
-    <section ref={sectionRef} className="py-24 sm:py-32 bg-muted">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+    <section ref={sectionRef} className="py-24 sm:py-32 bg-muted tech-surface relative overflow-hidden">
+      {/* Blueprint 3D background — desktop only */}
+      <div className="hidden lg:block absolute inset-0 z-0 pointer-events-none opacity-60">
+        <Suspense fallback={null}>
+          <BlueprintCarScene />
+        </Suspense>
+      </div>
+
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 relative z-10">
         <div className="lg:grid lg:grid-cols-5 lg:gap-16">
           {/* Sticky heading — left */}
           <div className="lg:col-span-2 mb-12 lg:mb-0">
