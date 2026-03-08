@@ -45,58 +45,36 @@ function classifyMaterial(
   return "ghost";
 }
 
-// ─── 4 shared materials (NO cloning = no WebGL Context Lost) ─────────
-const defaultMat = new THREE.MeshPhysicalMaterial({
-  color: new THREE.Color("#c8cdd3"),
-  metalness: 0.3,
-  roughness: 0.6,
-  transparent: true,
-  opacity: 0.85,
-  depthWrite: true,
-});
+// ─── Create animatable material preserving original look ─────────────
+function createAnimatableMaterial(orig: THREE.MeshPhysicalMaterial): THREE.MeshPhysicalMaterial {
+  const mat = new THREE.MeshPhysicalMaterial({
+    color: orig.color.clone(),
+    metalness: orig.metalness,
+    roughness: orig.roughness,
+    clearcoat: orig.clearcoat,
+    clearcoatRoughness: orig.clearcoatRoughness,
+    transparent: true,
+    opacity: 0.85,
+    depthWrite: true,
+    emissive: orig.emissive.clone(),
+    emissiveIntensity: 0,
+  });
 
-const ghostMat = new THREE.MeshPhysicalMaterial({
-  color: new THREE.Color("#b0b8c4"),
-  metalness: 0.1,
-  roughness: 0.8,
-  transparent: true,
-  opacity: 0.08,
-  depthWrite: false,
-});
+  // Share texture references — NO clone = NO extra GPU memory
+  mat.map = orig.map;
+  mat.normalMap = orig.normalMap;
+  mat.roughnessMap = orig.roughnessMap;
+  mat.metalnessMap = orig.metalnessMap;
+  mat.envMap = orig.envMap;
+  mat.aoMap = orig.aoMap;
+  mat.emissiveMap = orig.emissiveMap;
+  mat.name = orig.name;
 
-const ghostPaintMat = new THREE.MeshPhysicalMaterial({
-  color: new THREE.Color("#c0c6cc"),
-  metalness: 0.15,
-  roughness: 0.7,
-  transparent: true,
-  opacity: 0.12,
-  depthWrite: false,
-});
+  // Store base emissive for highlight glow calculation
+  mat.userData.baseEmissiveIntensity = orig.emissiveIntensity;
 
-const highlightMat = new THREE.MeshPhysicalMaterial({
-  color: new THREE.Color("#e8dcc8"),
-  metalness: 0.45,
-  roughness: 0.3,
-  transparent: true,
-  opacity: 1.0,
-  depthWrite: true,
-  emissive: new THREE.Color("#d4c5a0"),
-  emissiveIntensity: 0.15,
-});
-
-const materialForState: Record<MaterialState, THREE.MeshPhysicalMaterial> = {
-  default: defaultMat,
-  ghost: ghostMat,
-  "ghost-paint": ghostPaintMat,
-  highlighted: highlightMat,
-};
-
-const targetOpacity: Record<MaterialState, number> = {
-  default: 0.85,
-  ghost: 0.08,
-  "ghost-paint": 0.12,
-  highlighted: 1.0,
-};
+  return mat;
+}
 
 interface CarModelProps {
   activeSlug: string | null;
@@ -107,20 +85,23 @@ function CarModel({ activeSlug }: CarModelProps) {
   const { scene } = useGLTF(MODEL_PATH, DRACO_PATH);
   const { viewport } = useThree();
   const mouse = useRef({ x: 0, y: 0 });
-  const prevSlugRef = useRef<string | null>(null);
 
-  // Collect mesh metadata (no cloning, just store references)
-  const { meshData, interiorMeshes } = useMemo(() => {
-    const data: { mesh: THREE.Mesh; matName: string }[] = [];
+  // Build 22 animatable materials (one per unique name) + collect mesh data
+  const { materialMap, interiorMeshes, meshData } = useMemo(() => {
+    const matMap = new Map<string, THREE.MeshPhysicalMaterial>();
     const intMeshes: THREE.Mesh[] = [];
+    const data: { mesh: THREE.Mesh; matName: string }[] = [];
 
     scene.traverse((child) => {
       if (!(child instanceof THREE.Mesh)) return;
-      const origMat = child.material as THREE.MeshPhysicalMaterial;
-      const matName = origMat?.name || "";
+      const orig = child.material as THREE.MeshPhysicalMaterial;
+      const matName = orig?.name || "";
 
-      // Set default material immediately
-      child.material = defaultMat;
+      if (!matMap.has(matName)) {
+        matMap.set(matName, createAnimatableMaterial(orig));
+      }
+
+      child.material = matMap.get(matName)!;
 
       if (matchesMaterial(matName, hiddenKeywords)) {
         child.visible = false;
@@ -130,85 +111,63 @@ function CarModel({ activeSlug }: CarModelProps) {
       data.push({ mesh: child, matName });
     });
 
-    return { meshData: data, interiorMeshes: intMeshes };
+    return { materialMap: matMap, interiorMeshes: intMeshes, meshData: data };
   }, [scene]);
 
   // GSAP-animated highlight transitions
   useEffect(() => {
-    const isFirstRender = prevSlugRef.current === null && activeSlug === null;
-    prevSlugRef.current = activeSlug;
+    // Kill all running tweens
+    materialMap.forEach((mat) => gsap.killTweensOf(mat));
 
-    // Kill running tweens on shared materials
-    gsap.killTweensOf(defaultMat);
-    gsap.killTweensOf(ghostMat);
-    gsap.killTweensOf(ghostPaintMat);
-    gsap.killTweensOf(highlightMat);
-
-    if (isFirstRender) {
-      // First render: just assign default material, no animation
-      return;
-    }
-
-    // Capture current opacity to use as animation start point
-    const currentOpacity = defaultMat.opacity;
-
-    // Reset all shared materials to current visual state (seamless start)
-    ghostMat.opacity = currentOpacity;
-    ghostPaintMat.opacity = currentOpacity;
-    highlightMat.opacity = currentOpacity;
-    highlightMat.emissiveIntensity = 0;
-
-    // Assign correct material to each mesh
-    meshData.forEach(({ mesh, matName }) => {
-      if (matchesMaterial(matName, hiddenKeywords)) return; // skip interior
+    materialMap.forEach((mat, matName) => {
       const state = classifyMaterial(activeSlug, matName);
-      mesh.material = materialForState[state];
-      mesh.material.depthWrite = state === "highlighted" || state === "default";
+      const baseEmissive = (mat.userData.baseEmissiveIntensity as number) || 0;
+
+      mat.depthWrite = state === "highlighted" || state === "default";
+
+      const targets: Record<MaterialState, { opacity: number; emissiveIntensity: number }> = {
+        default:       { opacity: 0.85, emissiveIntensity: baseEmissive },
+        highlighted:   { opacity: 1.0,  emissiveIntensity: baseEmissive + 0.12 },
+        ghost:         { opacity: 0.06, emissiveIntensity: 0 },
+        "ghost-paint": { opacity: 0.10, emissiveIntensity: 0 },
+      };
+
+      gsap.to(mat, {
+        ...targets[state],
+        duration: 0.5,
+        ease: "power2.out",
+        overwrite: "auto",
+      });
     });
 
-    // Handle Interior visibility
+    // Handle Interior visibility (show only when highlighted)
     interiorMeshes.forEach((mesh) => {
-      const matName = meshData.find((d) => d.mesh === mesh)?.matName || "";
+      const entry = meshData.find((d) => d.mesh === mesh);
+      const matName = entry?.matName || "";
       const state = classifyMaterial(activeSlug, matName);
 
-      if (state === "highlighted") {
+      if (state === "highlighted" && !mesh.visible) {
         mesh.visible = true;
-        mesh.material = highlightMat;
-      } else {
-        mesh.visible = false;
+        (mesh.material as THREE.MeshPhysicalMaterial).opacity = 0;
+        gsap.to(mesh.material, {
+          opacity: 1.0,
+          duration: 0.5,
+          ease: "power2.out",
+        });
+      } else if (state !== "highlighted" && mesh.visible) {
+        gsap.to(mesh.material, {
+          opacity: 0,
+          duration: 0.3,
+          ease: "power2.in",
+          onComplete: () => { mesh.visible = false; },
+        });
       }
     });
 
-    // Animate shared materials from current opacity to their targets
-    gsap.to(defaultMat, {
-      opacity: targetOpacity.default,
-      duration: 0.45,
-      ease: "power2.out",
-    });
-    gsap.to(ghostMat, {
-      opacity: targetOpacity.ghost,
-      duration: 0.45,
-      ease: "power2.out",
-    });
-    gsap.to(ghostPaintMat, {
-      opacity: targetOpacity["ghost-paint"],
-      duration: 0.45,
-      ease: "power2.out",
-    });
-    gsap.to(highlightMat, {
-      opacity: targetOpacity.highlighted,
-      emissiveIntensity: 0.15,
-      duration: 0.45,
-      ease: "power2.out",
-    });
-
     return () => {
-      gsap.killTweensOf(defaultMat);
-      gsap.killTweensOf(ghostMat);
-      gsap.killTweensOf(ghostPaintMat);
-      gsap.killTweensOf(highlightMat);
+      materialMap.forEach((mat) => gsap.killTweensOf(mat));
     };
-  }, [activeSlug, meshData, interiorMeshes]);
+  }, [activeSlug, materialMap, interiorMeshes, meshData]);
 
   // Gentle mouse-follow rotation
   useFrame((state) => {
