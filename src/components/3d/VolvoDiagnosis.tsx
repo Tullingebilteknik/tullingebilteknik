@@ -5,18 +5,18 @@ import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { Environment, useGLTF } from "@react-three/drei";
 import * as THREE from "three";
 
-// Map service slugs to mesh name patterns
+// Map service slugs to mesh name patterns — each highlights unique parts
 const serviceHighlightMap: Record<string, string[]> = {
+  "service-underhall": ["body paint", "body black", "body chrome", "door fr", "body plastic", "body focus"],
   "bromsar": ["disk brake"],
-  "dack-hjul": ["wheel tire", "wheel disk", "wheel metal"],
-  "ac-service": ["hl front", "body chrome"],
-  "service-underhall": ["body paint", "body black"],
-  "felsökning-diagnostik": ["win glass", "headlight"],
-  "besiktningsförberedelse": ["body paint", "body black", "hl front", "headlight"],
-  "oljebyte": ["body black", "body plastic"],
-  "avgassystem": ["body plastic", "body black"],
-  "koppling-vaxellada": ["body black", "body plastic"],
-  "elektronik-elsystem": ["win glass", "headlight", "signalglass"],
+  "dack-hjul": ["wheel tire", "wheel disk", "wheel metal", "wheel black"],
+  "ac-service": ["hl front", "headlight chrome", "headlight dso", "body chrome"],
+  "felsökning-diagnostik": ["win glass", "headlight", "signalglass", "mirror", "win frame"],
+  "besiktningsförberedelse": ["hl front", "hl goback", "signalglass", "win glass", "plate tex", "mirror"],
+  "oljebyte": ["body black", "body plastic", "body focus"],
+  "avgassystem": ["hl goback", "body plastic", "body black"],
+  "koppling-vaxellada": ["body black", "wheel metal", "disk brake tr."],
+  "elektronik-elsystem": ["headlight", "signalglass", "headlight dso", "headlight chrome", "mirror", "volvo_logo"],
 };
 
 const ghostMaterial = new THREE.MeshPhysicalMaterial({
