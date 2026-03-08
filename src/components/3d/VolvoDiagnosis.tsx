@@ -111,6 +111,7 @@ function CarModel({ activeSlug }: CarModelProps) {
       data.push({ mesh: child, matName });
     });
 
+    console.log("Material names:", Array.from(matMap.keys()));
     return { materialMap: matMap, interiorMeshes: intMeshes, meshData: data };
   }, [scene]);
 
