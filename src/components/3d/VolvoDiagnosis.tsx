@@ -33,19 +33,38 @@ const serviceHighlightMap: Record<string, string[]> = {
 // Materials to hide by default (visible through windows otherwise)
 const hiddenKeywords = ["Interior"];
 
-// Check if a material name matches any of the given substrings
 function matchesMaterial(matName: string, keywords: string[]): boolean {
   return keywords.some((kw) => matName.includes(kw));
 }
 
-// Sketch material — faint "pencil sketch" look for default state
-const sketchMaterial = new THREE.MeshPhysicalMaterial({
+// Shared materials — only 4 instances total instead of 2600+
+const sketchMat = new THREE.MeshPhysicalMaterial({
   color: new THREE.Color("#b0b8c4"),
   metalness: 0.1,
   roughness: 0.8,
   transparent: true,
   opacity: 0.05,
   depthWrite: false,
+});
+
+const sketchDimmedMat = new THREE.MeshPhysicalMaterial({
+  color: new THREE.Color("#b0b8c4"),
+  metalness: 0.1,
+  roughness: 0.8,
+  transparent: true,
+  opacity: 0.03,
+  depthWrite: false,
+});
+
+const highlightMat = new THREE.MeshPhysicalMaterial({
+  color: new THREE.Color("#d4dbe3"),
+  metalness: 0.4,
+  roughness: 0.35,
+  transparent: true,
+  opacity: 0.90,
+  depthWrite: true,
+  emissive: new THREE.Color("#ffffff"),
+  emissiveIntensity: 0.08,
 });
 
 interface CarModelProps {
@@ -58,13 +77,11 @@ function CarModel({ activeSlug }: CarModelProps) {
   const { viewport } = useThree();
   const mouse = useRef({ x: 0, y: 0 });
 
-  // Store mesh metadata and create per-mesh materials
+  // Collect mesh metadata (no material cloning — shared materials)
   const meshData = useMemo(() => {
     const data: {
       mesh: THREE.Mesh;
       matName: string;
-      sketch: THREE.MeshPhysicalMaterial;
-      highlight: THREE.MeshPhysicalMaterial;
       isHiddenByDefault: boolean;
     }[] = [];
     scene.traverse((child) => {
@@ -75,18 +92,7 @@ function CarModel({ activeSlug }: CarModelProps) {
         if (isHidden) {
           child.visible = false;
         }
-        const sketch = sketchMaterial.clone();
-        const highlight = new THREE.MeshPhysicalMaterial({
-          color: new THREE.Color("#d4dbe3"),
-          metalness: 0.4,
-          roughness: 0.35,
-          transparent: true,
-          opacity: 0.90,
-          depthWrite: true,
-          emissive: new THREE.Color("#ffffff"),
-          emissiveIntensity: 0.08,
-        });
-        data.push({ mesh: child, matName, sketch, highlight, isHiddenByDefault: isHidden });
+        data.push({ mesh: child, matName, isHiddenByDefault: isHidden });
       }
     });
     return data;
@@ -94,9 +100,9 @@ function CarModel({ activeSlug }: CarModelProps) {
 
   // Apply sketch material to visible meshes on mount
   useEffect(() => {
-    meshData.forEach(({ mesh, sketch, isHiddenByDefault }) => {
+    meshData.forEach(({ mesh, isHiddenByDefault }) => {
       if (!isHiddenByDefault) {
-        mesh.material = sketch;
+        mesh.material = sketchMat;
       }
     });
   }, [meshData]);
@@ -108,21 +114,19 @@ function CarModel({ activeSlug }: CarModelProps) {
     const keywords = normalizedSlug ? serviceHighlightMap[normalizedSlug] || [] : [];
     const hasActiveService = normalizedSlug != null && (isFullService || keywords.length > 0);
 
-    meshData.forEach(({ mesh, matName, sketch, highlight, isHiddenByDefault }) => {
+    meshData.forEach(({ mesh, matName, isHiddenByDefault }) => {
       const isHighlighted = hasActiveService &&
         (isFullService ? !isHiddenByDefault : matchesMaterial(matName, keywords));
 
       if (isHighlighted) {
         mesh.visible = true;
-        mesh.material = highlight;
+        mesh.material = highlightMat;
       } else if (hasActiveService) {
         mesh.visible = !isHiddenByDefault;
-        sketch.opacity = 0.03;
-        mesh.material = sketch;
+        mesh.material = sketchDimmedMat;
       } else {
         mesh.visible = !isHiddenByDefault;
-        sketch.opacity = 0.05;
-        mesh.material = sketch;
+        mesh.material = sketchMat;
       }
     });
   }, [activeSlug, meshData]);
@@ -141,13 +145,13 @@ function CarModel({ activeSlug }: CarModelProps) {
   });
 
   return (
-    <group ref={groupRef} position={[0.5, -0.3, 0]} scale={1.8}>
+    <group ref={groupRef} position={[1.5, -0.5, 0]} scale={160}>
       <primitive object={scene} />
     </group>
   );
 }
 
-useGLTF.preload(MODEL_PATH);
+useGLTF.preload(MODEL_PATH, DRACO_PATH);
 
 interface VolvoDiagnosisSceneProps {
   activeSlug: string | null;
@@ -157,7 +161,7 @@ export default function VolvoDiagnosisScene({ activeSlug }: VolvoDiagnosisSceneP
   return (
     <Canvas
       dpr={[1, 1.5]}
-      camera={{ position: [4, 1, 4], fov: 35 }}
+      camera={{ position: [6, 1.5, 6], fov: 35 }}
       style={{ background: "transparent" }}
     >
       <ambientLight intensity={0.5} />
