@@ -103,7 +103,7 @@ function VolvoModel({ activeSlug }: VolvoModelProps) {
   });
 
   return (
-    <group ref={groupRef} position={[1.5, -0.8, 0]} scale={2.5}>
+    <group ref={groupRef} position={[1.5, -0.5, 0]} scale={1.6}>
       <primitive object={scene} />
     </group>
   );
@@ -119,7 +119,7 @@ export default function VolvoDiagnosisScene({ activeSlug }: VolvoDiagnosisSceneP
   return (
     <Canvas
       dpr={[1, 1.5]}
-      camera={{ position: [5, 1.5, 5], fov: 40 }}
+      camera={{ position: [6, 1.5, 6], fov: 35 }}
       style={{ background: "transparent" }}
     >
       <ambientLight intensity={0.4} />
