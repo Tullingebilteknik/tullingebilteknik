@@ -6,6 +6,7 @@ import { Environment, useGLTF } from "@react-three/drei";
 import * as THREE from "three";
 
 const MODEL_PATH = "/models/2023_bmw_m3_touring.glb";
+const DRACO_PATH = "/draco/gltf/";
 
 // ─── Service highlight mappings ──────────────────────────────────────
 // BMW M3 Touring materials are semantically named. We match by substring
@@ -53,7 +54,7 @@ interface CarModelProps {
 
 function CarModel({ activeSlug }: CarModelProps) {
   const groupRef = useRef<THREE.Group>(null);
-  const { scene } = useGLTF(MODEL_PATH);
+  const { scene } = useGLTF(MODEL_PATH, DRACO_PATH);
   const { viewport } = useThree();
   const mouse = useRef({ x: 0, y: 0 });
 
