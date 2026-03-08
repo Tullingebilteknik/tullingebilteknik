@@ -8,26 +8,29 @@ import * as THREE from "three";
 const MODEL_PATH = "/models/2023_volvo_xc60.glb";
 const DRACO_PATH = "/draco/gltf/";
 
-// Map service slugs to material name patterns (XC60 uses Portuguese material names)
+// Map service slugs to exact material names (XC60 uses Portuguese material names)
 const serviceHighlightMap: Record<string, string[]> = {
-  "service-underhall": ["Pintura", "Cromado", "Plastico_Brilho"],
-  "bromsar": ["Disco"],
-  "dack-hjul": ["Roda", "Pneu"],
-  "ac-service": ["Metal_Farol", "Refletor_Farol", "Cromado"],
-  "felsökning-diagnostik": ["Vidros2", "Espelhos", "Refletor_Farol", "Painel"],
-  "besiktningsförberedelse": ["Refletor_Farol", "Vermelho", "Vidros2", "Espelhos"],
-  "oljebyte": ["Metal_Preto", "Plastico_1"],
-  "avgassystem": ["Vermelho", "Metal_Preto", "Plastico_1"],
-  "koppling-vaxellada": ["Metal_Preto", "Roda_1", "Disco"],
-  "elektronik-elsystem": ["Metal_Farol", "Refletor_Farol", "Vermelho", "Espelhos", "Painel"],
+  "service-underhall": ["Carro_Pintura", "Carro_Cromado", "Carro_Plastico_Brilho"],
+  "bromsar": ["Carro_Disco"],
+  "dack-hjul": ["Carro_Roda", "Carro_Roda_1", "Carro_Pneu"],
+  "ac-service": ["Carro_Metal_Farol", "Carro_Metal_Farol_1", "Carro_Refletor_Farol", "Carro_Refletor_Farol_1", "Carro_Cromado"],
+  "felsökning-diagnostik": ["Carro_Vidros2", "Carro_Vidros2_1", "Carro_Espelhos", "Carro_Painel"],
+  "besiktningsförberedelse": ["Carro_Refletor_Farol", "Carro_Refletor_Farol_1", "Carro_Vermelho_1", "Carro_Vermelho_2", "Carro_Vermelho_3", "Carro_Vidros2", "Carro_Vidros2_1", "Carro_Espelhos"],
+  "oljebyte": ["Carro_Plastico", "Carro_Plastico_1"],
+  "avgassystem": ["Carro_Vermelho_1", "Carro_Vermelho_2", "Carro_Vermelho_3", "Carro_Plastico_1"],
+  "koppling-vaxellada": ["Carro_Metal_Preto", "Carro_Disco"],
+  "elektronik-elsystem": ["Carro_Metal_Farol", "Carro_Metal_Farol_1", "Carro_Refletor_Farol", "Carro_Refletor_Farol_1", "Carro_Vermelho_1", "Carro_Vermelho_2", "Carro_Vermelho_3", "Carro_Espelhos", "Carro_Painel"],
 };
+
+// Interior materials to hide completely (not visible from outside)
+const hiddenMaterials = new Set(["Carro_Interno2", "Carro_Interno2_1", "Carro_Interno2_2", "Carro_Interno2_3", "Carro_Interno2_4", "Carro_Interno2_5", "Carro_Interno2_6", "Carro_Interno2_7", "Carro_Interno2_8", "Carro_Interno2_9"]);
 
 const ghostMaterial = new THREE.MeshPhysicalMaterial({
   color: new THREE.Color("#9ca3af"),
   metalness: 0.3,
   roughness: 0.6,
   transparent: true,
-  opacity: 0.08,
+  opacity: 0.15,
   depthWrite: false,
 });
 
@@ -55,6 +58,11 @@ function VolvoModel({ activeSlug }: VolvoModelProps) {
       if (child instanceof THREE.Mesh) {
         const mat = child.material as THREE.Material;
         const originalMatName = mat?.name || "";
+        // Hide interior meshes completely
+        if (hiddenMaterials.has(originalMatName)) {
+          child.visible = false;
+          return;
+        }
         const ghost = ghostMaterial.clone();
         const highlight = new THREE.MeshPhysicalMaterial({
           color: goldHighlight,
@@ -84,15 +92,15 @@ function VolvoModel({ activeSlug }: VolvoModelProps) {
     const patterns = normalizedSlug ? serviceHighlightMap[normalizedSlug] || [] : [];
 
     meshData.forEach(({ mesh, originalMatName, ghost, highlight }) => {
-      const isHighlighted = patterns.some((p) => originalMatName.includes(p));
+      const isHighlighted = patterns.includes(originalMatName);
 
       if (isHighlighted) {
         mesh.material = highlight;
       } else if (normalizedSlug && patterns.length > 0) {
-        ghost.opacity = 0.03;
+        ghost.opacity = 0.06;
         mesh.material = ghost;
       } else {
-        ghost.opacity = 0.08;
+        ghost.opacity = 0.15;
         mesh.material = ghost;
       }
     });
