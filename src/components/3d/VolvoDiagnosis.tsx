@@ -4,21 +4,13 @@ import { useRef, useEffect, useMemo } from "react";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { Environment, useGLTF } from "@react-three/drei";
 import * as THREE from "three";
+import { gsap } from "@/lib/gsap";
 
 const MODEL_PATH = "/models/2023_bmw_m3_touring.glb";
 const DRACO_PATH = "/draco/gltf/";
 
 // ─── Service highlight mappings ──────────────────────────────────────
-// BMW M3 Touring materials are semantically named. We match by substring
-// in the material name (e.g. "Engine" matches "...EngineA_Material").
-//
-// Available semantic keywords in material names:
-//   Paint, Coloured, Window, RED_GLASS, Light, Engine, Grille(1-8),
-//   Wheel, Calliper, CalliperBadge, Carbon, Interior, Badge, Base,
-//   ManufacturerPlate
-
 const serviceHighlightMap: Record<string, string[]> = {
-  // service-underhall uses special "all visible" flag
   "bromsar": ["Calliper", "Wheel"],
   "dack-hjul": ["Wheel"],
   "ac-service": ["Engine", "Grille"],
@@ -30,42 +22,44 @@ const serviceHighlightMap: Record<string, string[]> = {
   "elektronik-elsystem": ["Light", "RED_GLASS", "Interior"],
 };
 
-// Materials to hide by default (visible through windows otherwise)
 const hiddenKeywords = ["Interior"];
 
 function matchesMaterial(matName: string, keywords: string[]): boolean {
   return keywords.some((kw) => matName.includes(kw));
 }
 
-// Shared materials — only 4 instances total instead of 2600+
-const sketchMat = new THREE.MeshPhysicalMaterial({
-  color: new THREE.Color("#b0b8c4"),
-  metalness: 0.1,
-  roughness: 0.8,
-  transparent: true,
-  opacity: 0.05,
-  depthWrite: false,
-});
+type MaterialState = "highlighted" | "ghost" | "ghost-paint" | "default";
 
-const sketchDimmedMat = new THREE.MeshPhysicalMaterial({
-  color: new THREE.Color("#b0b8c4"),
-  metalness: 0.1,
-  roughness: 0.8,
-  transparent: true,
-  opacity: 0.03,
-  depthWrite: false,
-});
+function classifyMaterials(
+  slug: string | null,
+  materialNames: string[]
+): Map<string, MaterialState> {
+  const result = new Map<string, MaterialState>();
+  const normalized = slug?.normalize("NFC") ?? null;
+  const isFullService = normalized === "service-underhall";
+  const keywords = normalized ? serviceHighlightMap[normalized] || [] : [];
+  const hasActive = normalized != null && (isFullService || keywords.length > 0);
 
-const highlightMat = new THREE.MeshPhysicalMaterial({
-  color: new THREE.Color("#d4dbe3"),
-  metalness: 0.4,
-  roughness: 0.35,
-  transparent: true,
-  opacity: 0.90,
-  depthWrite: true,
-  emissive: new THREE.Color("#ffffff"),
-  emissiveIntensity: 0.08,
-});
+  for (const matName of materialNames) {
+    if (!hasActive) {
+      result.set(matName, "default");
+    } else if (isFullService || matchesMaterial(matName, keywords)) {
+      result.set(matName, "highlighted");
+    } else if (matName.includes("Paint")) {
+      result.set(matName, "ghost-paint");
+    } else {
+      result.set(matName, "ghost");
+    }
+  }
+  return result;
+}
+
+const stateTargets: Record<MaterialState, { opacity: number; emissiveIntensity: number }> = {
+  default:      { opacity: 0.85, emissiveIntensity: 0.0 },
+  highlighted:  { opacity: 1.0,  emissiveIntensity: 0.10 },
+  ghost:        { opacity: 0.12, emissiveIntensity: 0.0 },
+  "ghost-paint": { opacity: 0.15, emissiveIntensity: 0.0 },
+};
 
 interface CarModelProps {
   activeSlug: string | null;
@@ -77,60 +71,89 @@ function CarModel({ activeSlug }: CarModelProps) {
   const { viewport } = useThree();
   const mouse = useRef({ x: 0, y: 0 });
 
-  // Collect mesh metadata (no material cloning — shared materials)
-  const meshData = useMemo(() => {
-    const data: {
-      mesh: THREE.Mesh;
-      matName: string;
-      isHiddenByDefault: boolean;
-    }[] = [];
+  // Clone materials per unique name & collect mesh metadata
+  const { materialMap, interiorMeshes } = useMemo(() => {
+    const matMap = new Map<string, THREE.MeshPhysicalMaterial>();
+    const intMeshes: THREE.Mesh[] = [];
+
     scene.traverse((child) => {
-      if (child instanceof THREE.Mesh) {
-        const mat = child.material as THREE.Material;
-        const matName = mat?.name || "";
-        const isHidden = matchesMaterial(matName, hiddenKeywords);
-        if (isHidden) {
-          child.visible = false;
-        }
-        data.push({ mesh: child, matName, isHiddenByDefault: isHidden });
+      if (!(child instanceof THREE.Mesh)) return;
+      const origMat = child.material as THREE.MeshPhysicalMaterial;
+      const matName = origMat?.name || "";
+
+      if (!matMap.has(matName)) {
+        const cloned = origMat.clone();
+        cloned.transparent = true;
+        cloned.opacity = 0.85;
+        cloned.emissive = new THREE.Color("#ffffff");
+        cloned.emissiveIntensity = 0.0;
+        cloned.depthWrite = true;
+        cloned.name = matName;
+        matMap.set(matName, cloned);
+      }
+
+      child.material = matMap.get(matName)!;
+
+      if (matchesMaterial(matName, hiddenKeywords)) {
+        child.visible = false;
+        intMeshes.push(child);
       }
     });
-    return data;
+
+    return { materialMap: matMap, interiorMeshes: intMeshes };
   }, [scene]);
 
-  // Apply sketch material to visible meshes on mount
+  // GSAP-animated highlight transitions
   useEffect(() => {
-    meshData.forEach(({ mesh, isHiddenByDefault }) => {
-      if (!isHiddenByDefault) {
-        mesh.material = sketchMat;
-      }
+    const classification = classifyMaterials(activeSlug, Array.from(materialMap.keys()));
+
+    // Kill all running tweens
+    materialMap.forEach((mat) => gsap.killTweensOf(mat));
+
+    materialMap.forEach((mat, matName) => {
+      const state = classification.get(matName) || "default";
+      const t = stateTargets[state];
+
+      mat.depthWrite = state === "highlighted" || state === "default";
+
+      gsap.to(mat, {
+        opacity: t.opacity,
+        emissiveIntensity: t.emissiveIntensity,
+        duration: 0.45,
+        ease: "power2.out",
+        overwrite: "auto",
+      });
     });
-  }, [meshData]);
 
-  // Update highlights based on active service
-  useEffect(() => {
-    const normalizedSlug = activeSlug?.normalize("NFC") ?? null;
-    const isFullService = normalizedSlug === "service-underhall";
-    const keywords = normalizedSlug ? serviceHighlightMap[normalizedSlug] || [] : [];
-    const hasActiveService = normalizedSlug != null && (isFullService || keywords.length > 0);
+    // Handle Interior visibility (show only when highlighted)
+    interiorMeshes.forEach((mesh) => {
+      const matName = (mesh.material as THREE.Material).name;
+      const state = classification.get(matName);
 
-    meshData.forEach(({ mesh, matName, isHiddenByDefault }) => {
-      const isHighlighted = hasActiveService &&
-        (isFullService ? !isHiddenByDefault : matchesMaterial(matName, keywords));
-
-      if (isHighlighted) {
+      if (state === "highlighted" && !mesh.visible) {
         mesh.visible = true;
-        mesh.material = highlightMat;
-      } else if (hasActiveService) {
-        mesh.visible = !isHiddenByDefault;
-        mesh.material = sketchDimmedMat;
-      } else {
-        mesh.visible = !isHiddenByDefault;
-        mesh.material = sketchMat;
+        (mesh.material as THREE.MeshPhysicalMaterial).opacity = 0;
+        gsap.to(mesh.material, {
+          opacity: 1.0,
+          duration: 0.45,
+          ease: "power2.out",
+        });
+      } else if (state !== "highlighted" && mesh.visible) {
+        gsap.to(mesh.material, {
+          opacity: 0,
+          duration: 0.3,
+          ease: "power2.in",
+          onComplete: () => { mesh.visible = false; },
+        });
       }
     });
-  }, [activeSlug, meshData]);
 
+    return () => {
+      materialMap.forEach((mat) => gsap.killTweensOf(mat));
+    };
+  }, [activeSlug, materialMap, interiorMeshes]);
+
+  // Gentle mouse-follow rotation
   useFrame((state) => {
     if (!groupRef.current) return;
 
