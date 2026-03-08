@@ -5,18 +5,21 @@ import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { Environment, useGLTF } from "@react-three/drei";
 import * as THREE from "three";
 
-// Map service slugs to mesh name patterns — each highlights unique parts
+const MODEL_PATH = "/models/2023_volvo_xc60.glb";
+const DRACO_PATH = "/draco/gltf/";
+
+// Map service slugs to material name patterns (XC60 uses Portuguese material names)
 const serviceHighlightMap: Record<string, string[]> = {
-  "service-underhall": ["body paint", "body black", "body chrome", "door fr", "body plastic", "body focus"],
-  "bromsar": ["disk brake"],
-  "dack-hjul": ["wheel tire", "wheel disk", "wheel metal", "wheel black"],
-  "ac-service": ["hl front", "headlight chrome", "headlight dso", "body chrome"],
-  "felsökning-diagnostik": ["win glass", "headlight", "signalglass", "mirror", "win frame"],
-  "besiktningsförberedelse": ["hl front", "hl goback", "signalglass", "win glass", "plate tex", "mirror"],
-  "oljebyte": ["body black", "body plastic", "body focus"],
-  "avgassystem": ["hl goback", "body plastic", "body black"],
-  "koppling-vaxellada": ["body black", "wheel metal", "disk brake tr."],
-  "elektronik-elsystem": ["headlight", "signalglass", "headlight dso", "headlight chrome", "mirror", "volvo_logo"],
+  "service-underhall": ["Pintura", "Cromado", "Plastico_Brilho"],
+  "bromsar": ["Disco"],
+  "dack-hjul": ["Roda", "Pneu"],
+  "ac-service": ["Metal_Farol", "Refletor_Farol", "Cromado"],
+  "felsökning-diagnostik": ["Vidros2", "Espelhos", "Refletor_Farol", "Painel"],
+  "besiktningsförberedelse": ["Refletor_Farol", "Vermelho", "Vidros2", "Espelhos"],
+  "oljebyte": ["Metal_Preto", "Plastico_1"],
+  "avgassystem": ["Vermelho", "Metal_Preto", "Plastico_1"],
+  "koppling-vaxellada": ["Metal_Preto", "Roda_1", "Disco"],
+  "elektronik-elsystem": ["Metal_Farol", "Refletor_Farol", "Vermelho", "Espelhos", "Painel"],
 };
 
 const ghostMaterial = new THREE.MeshPhysicalMaterial({
@@ -36,15 +39,22 @@ interface VolvoModelProps {
 
 function VolvoModel({ activeSlug }: VolvoModelProps) {
   const groupRef = useRef<THREE.Group>(null);
-  const { scene } = useGLTF("/models/volvo_v60_polestar_2013.glb");
+  const { scene } = useGLTF(MODEL_PATH, DRACO_PATH);
   const { viewport } = useThree();
   const mouse = useRef({ x: 0, y: 0 });
 
-  // Store original materials and create per-mesh highlight materials
+  // Store original material names and create per-mesh highlight materials
   const meshData = useMemo(() => {
-    const data: { mesh: THREE.Mesh; ghost: THREE.MeshPhysicalMaterial; highlight: THREE.MeshPhysicalMaterial }[] = [];
+    const data: {
+      mesh: THREE.Mesh;
+      originalMatName: string;
+      ghost: THREE.MeshPhysicalMaterial;
+      highlight: THREE.MeshPhysicalMaterial;
+    }[] = [];
     scene.traverse((child) => {
       if (child instanceof THREE.Mesh) {
+        const mat = child.material as THREE.Material;
+        const originalMatName = mat?.name || "";
         const ghost = ghostMaterial.clone();
         const highlight = new THREE.MeshPhysicalMaterial({
           color: goldHighlight,
@@ -55,7 +65,7 @@ function VolvoModel({ activeSlug }: VolvoModelProps) {
           emissive: goldHighlight,
           emissiveIntensity: 0.6,
         });
-        data.push({ mesh: child, ghost, highlight });
+        data.push({ mesh: child, originalMatName, ghost, highlight });
       }
     });
     return data;
@@ -73,14 +83,12 @@ function VolvoModel({ activeSlug }: VolvoModelProps) {
     const normalizedSlug = activeSlug?.normalize("NFC") ?? null;
     const patterns = normalizedSlug ? serviceHighlightMap[normalizedSlug] || [] : [];
 
-    meshData.forEach(({ mesh, ghost, highlight }) => {
-      const name = mesh.name.toLowerCase();
-      const isHighlighted = patterns.some((p) => name.includes(p));
+    meshData.forEach(({ mesh, originalMatName, ghost, highlight }) => {
+      const isHighlighted = patterns.some((p) => originalMatName.includes(p));
 
       if (isHighlighted) {
         mesh.material = highlight;
       } else if (normalizedSlug && patterns.length > 0) {
-        // Dim non-highlighted parts further
         ghost.opacity = 0.03;
         mesh.material = ghost;
       } else {
@@ -110,7 +118,7 @@ function VolvoModel({ activeSlug }: VolvoModelProps) {
   );
 }
 
-useGLTF.preload("/models/volvo_v60_polestar_2013.glb");
+useGLTF.preload(MODEL_PATH, DRACO_PATH);
 
 interface VolvoDiagnosisSceneProps {
   activeSlug: string | null;

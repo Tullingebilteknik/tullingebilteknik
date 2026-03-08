@@ -5,6 +5,9 @@ import { Canvas, useFrame } from "@react-three/fiber";
 import { useGLTF } from "@react-three/drei";
 import * as THREE from "three";
 
+const MODEL_PATH = "/models/2023_volvo_xc60.glb";
+const DRACO_PATH = "/draco/gltf/";
+
 const wireframeMaterial = new THREE.MeshBasicMaterial({
   wireframe: true,
   color: new THREE.Color("#9ca3af"),
@@ -15,7 +18,7 @@ const wireframeMaterial = new THREE.MeshBasicMaterial({
 
 function WireframeVolvo() {
   const groupRef = useRef<THREE.Group>(null);
-  const { scene } = useGLTF("/models/volvo_v60_polestar_2013.glb");
+  const { scene } = useGLTF(MODEL_PATH, DRACO_PATH);
   const scrollY = useRef(0);
 
   const clonedScene = useMemo(() => {
@@ -50,6 +53,8 @@ function WireframeVolvo() {
     </group>
   );
 }
+
+useGLTF.preload(MODEL_PATH, DRACO_PATH);
 
 export default function BlueprintCarScene() {
   return (
