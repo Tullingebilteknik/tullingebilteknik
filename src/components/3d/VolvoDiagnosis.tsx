@@ -13,16 +13,16 @@ const DRACO_PATH = "/draco/gltf/";
 const serviceHighlightMap: Record<string, string[]> = {
   "bromsar": ["Calliper", "Wheel"],
   "dack-hjul": ["Wheel"],
-  "ac-service": ["Engine", "Grille"],
-  "felsökning-diagnostik": ["Light", "RED_GLASS", "Interior", "Engine"],
-  "besiktningsförberedelse": ["Light", "RED_GLASS", "Window", "Wheel", "Calliper", "Paint"],
-  "oljebyte": ["Engine"],
-  "avgassystem": ["Engine", "Base"],
-  "koppling-vaxellada": ["Engine", "Wheel"],
-  "elektronik-elsystem": ["Light", "RED_GLASS", "Interior"],
+  "ac-service": ["EngineA", "Grille"],
+  "felsökning-diagnostik": ["LightA", "RED_GLASS", "InteriorA", "EngineA"],
+  "besiktningsförberedelse": ["LightA", "RED_GLASS", "Window", "Wheel", "Calliper", "Paint"],
+  "oljebyte": ["EngineA"],
+  "avgassystem": ["EngineA"],
+  "koppling-vaxellada": ["EngineA"],
+  "elektronik-elsystem": ["LightA", "RED_GLASS", "InteriorA"],
 };
 
-const hiddenKeywords = ["Interior"];
+const hiddenKeywords = ["InteriorA"];
 
 function matchesMaterial(matName: string, keywords: string[]): boolean {
   return keywords.some((kw) => matName.includes(kw));
@@ -111,7 +111,6 @@ function CarModel({ activeSlug }: CarModelProps) {
       data.push({ mesh: child, matName });
     });
 
-    console.log("Material names:", Array.from(matMap.keys()).join(", "));
     return { materialMap: matMap, interiorMeshes: intMeshes, meshData: data };
   }, [scene]);
 
@@ -185,7 +184,7 @@ function CarModel({ activeSlug }: CarModelProps) {
   });
 
   return (
-    <group ref={groupRef} position={[1.5, -0.5, 0]} scale={160}>
+    <group ref={groupRef} position={[2.5, -0.5, 0]} scale={140}>
       <primitive object={scene} />
     </group>
   );
