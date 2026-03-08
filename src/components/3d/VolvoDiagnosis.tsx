@@ -48,12 +48,12 @@ function VolvoModel({ activeSlug }: VolvoModelProps) {
         const ghost = ghostMaterial.clone();
         const highlight = new THREE.MeshPhysicalMaterial({
           color: goldHighlight,
-          metalness: 0.8,
-          roughness: 0.2,
+          metalness: 0.6,
+          roughness: 0.25,
           transparent: true,
-          opacity: 0.6,
+          opacity: 0.85,
           emissive: goldHighlight,
-          emissiveIntensity: 0.3,
+          emissiveIntensity: 0.6,
         });
         data.push({ mesh: child, ghost, highlight });
       }
@@ -70,7 +70,8 @@ function VolvoModel({ activeSlug }: VolvoModelProps) {
 
   // Update highlights based on active service
   useEffect(() => {
-    const patterns = activeSlug ? serviceHighlightMap[activeSlug] || [] : [];
+    const normalizedSlug = activeSlug?.normalize("NFC") ?? null;
+    const patterns = normalizedSlug ? serviceHighlightMap[normalizedSlug] || [] : [];
 
     meshData.forEach(({ mesh, ghost, highlight }) => {
       const name = mesh.name.toLowerCase();
@@ -78,9 +79,9 @@ function VolvoModel({ activeSlug }: VolvoModelProps) {
 
       if (isHighlighted) {
         mesh.material = highlight;
-      } else if (activeSlug && patterns.length > 0) {
+      } else if (normalizedSlug && patterns.length > 0) {
         // Dim non-highlighted parts further
-        ghost.opacity = 0.04;
+        ghost.opacity = 0.03;
         mesh.material = ghost;
       } else {
         ghost.opacity = 0.08;
