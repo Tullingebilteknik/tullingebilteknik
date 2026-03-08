@@ -7,9 +7,9 @@ import * as THREE from "three";
 
 const wireframeMaterial = new THREE.MeshBasicMaterial({
   wireframe: true,
-  color: new THREE.Color("#d1d5db"),
+  color: new THREE.Color("#9ca3af"),
   transparent: true,
-  opacity: 0.06,
+  opacity: 0.18,
   depthWrite: false,
 });
 
@@ -45,7 +45,7 @@ function WireframeVolvo() {
   });
 
   return (
-    <group ref={groupRef} position={[0, -0.3, 0]} scale={2.2}>
+    <group ref={groupRef} position={[0.5, -0.5, 0]} scale={2.8}>
       <primitive object={clonedScene} />
     </group>
   );

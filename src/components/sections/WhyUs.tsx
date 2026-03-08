@@ -81,7 +81,7 @@ export function WhyUs() {
   return (
     <section ref={sectionRef} className="py-24 sm:py-32 bg-muted tech-surface relative overflow-hidden">
       {/* Blueprint 3D background — desktop only */}
-      <div className="hidden lg:block absolute inset-0 z-0 pointer-events-none opacity-60">
+      <div className="hidden lg:block absolute inset-0 z-0 pointer-events-none">
         <Suspense fallback={null}>
           <BlueprintCarScene />
         </Suspense>

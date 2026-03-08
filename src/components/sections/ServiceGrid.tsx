@@ -47,9 +47,18 @@ export function ServiceGrid({ services }: ServiceGridProps) {
   return (
     <>
       {/* Dark-to-light transition */}
-      <div className="h-24 sm:h-32 bg-gradient-to-b from-[oklch(0.12_0.005_260)] to-white" />
+      <div className="h-16 bg-gradient-to-b from-[oklch(0.12_0.005_260)] via-[oklch(0.35_0.005_260)] to-transparent" />
 
-      <section className="py-12 sm:py-20 bg-white tech-surface">
+      <section className="py-12 sm:py-20 bg-white tech-surface relative overflow-hidden">
+        {/* Full-section 3D Volvo background — desktop only */}
+        <div className="hidden lg:block absolute inset-0 z-0 pointer-events-none">
+          <Suspense fallback={null}>
+            <VolvoDiagnosisScene
+              activeSlug={activeService?.slug ?? null}
+            />
+          </Suspense>
+        </div>
+
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 relative z-10">
           <ScrollReveal>
             <div className="mb-16">
@@ -62,66 +71,33 @@ export function ServiceGrid({ services }: ServiceGridProps) {
             </div>
           </ScrollReveal>
 
-          {/* Desktop: Hover reveal layout */}
-          <div className="hidden lg:grid lg:grid-cols-5 lg:gap-12">
-            {/* Service list — left side */}
-            <ScrollReveal className="lg:col-span-3" stagger={0.08}>
-              {services.map((service, index) => {
-                const Icon = iconMap[service.icon] || Settings;
-                const num = String(index + 1).padStart(2, "0");
-                return (
-                  <Link
-                    key={service.id}
-                    href={`/tjanster#${service.slug}`}
-                    onMouseEnter={() => setHoveredIndex(index)}
-                    onMouseLeave={() => setHoveredIndex(null)}
-                    className="group flex items-center gap-6 py-5 border-b border-border/50 transition-colors hover:border-primary/30"
-                  >
-                    <span className="font-mono text-xs text-muted-foreground/40 w-6 shrink-0">
-                      {num}
-                    </span>
-                    <Icon className="h-5 w-5 text-muted-foreground/30 group-hover:text-primary transition-colors shrink-0" />
-                    <span className="font-heading text-lg font-600 text-foreground/70 group-hover:text-foreground transition-colors">
-                      {service.title}
-                    </span>
-                    <span className="ml-auto text-muted-foreground/30 group-hover:text-primary group-hover:translate-x-1 transition-all">
-                      &rarr;
-                    </span>
-                  </Link>
-                );
-              })}
-            </ScrollReveal>
-
-            {/* 3D Volvo diagnosis — right side */}
-            <div className="lg:col-span-2 relative">
-              <div className="sticky top-32 aspect-[4/5] rounded-xl overflow-hidden bg-muted/30 border border-border/30">
-                <Suspense
-                  fallback={
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <p className="font-mono text-xs text-muted-foreground/30 uppercase tracking-widest">
-                        Laddar 3D...
-                      </p>
-                    </div>
-                  }
+          {/* Desktop: Service list with 3D background */}
+          <ScrollReveal className="hidden lg:block max-w-xl" stagger={0.08}>
+            {services.map((service, index) => {
+              const Icon = iconMap[service.icon] || Settings;
+              const num = String(index + 1).padStart(2, "0");
+              return (
+                <Link
+                  key={service.id}
+                  href={`/tjanster#${service.slug}`}
+                  onMouseEnter={() => setHoveredIndex(index)}
+                  onMouseLeave={() => setHoveredIndex(null)}
+                  className="group flex items-center gap-6 py-5 border-b border-border/50 transition-colors hover:border-primary/30"
                 >
-                  <VolvoDiagnosisScene
-                    activeSlug={activeService?.slug ?? null}
-                  />
-                </Suspense>
-                {/* Service label overlay */}
-                {activeService && (
-                  <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/50 to-transparent p-4 pointer-events-none">
-                    <p className="font-mono text-[10px] tracking-[0.2em] uppercase text-white/40">
-                      Diagnostik
-                    </p>
-                    <p className="text-sm text-white/80 mt-1">
-                      {activeService.title}
-                    </p>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
+                  <span className="font-mono text-xs text-muted-foreground/40 w-6 shrink-0">
+                    {num}
+                  </span>
+                  <Icon className="h-5 w-5 text-muted-foreground/30 group-hover:text-primary transition-colors shrink-0" />
+                  <span className="font-heading text-lg font-600 text-foreground/70 group-hover:text-foreground transition-colors">
+                    {service.title}
+                  </span>
+                  <span className="ml-auto text-muted-foreground/30 group-hover:text-primary group-hover:translate-x-1 transition-all">
+                    &rarr;
+                  </span>
+                </Link>
+              );
+            })}
+          </ScrollReveal>
 
           {/* Mobile: Card layout */}
           <ScrollReveal className="lg:hidden grid grid-cols-1 sm:grid-cols-2 gap-4" stagger={0.06}>
