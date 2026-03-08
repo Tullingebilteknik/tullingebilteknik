@@ -55,10 +55,10 @@ function classifyMaterials(
 }
 
 const stateTargets: Record<MaterialState, { opacity: number; emissiveIntensity: number }> = {
-  default:      { opacity: 0.85, emissiveIntensity: 0.0 },
-  highlighted:  { opacity: 1.0,  emissiveIntensity: 0.10 },
-  ghost:        { opacity: 0.12, emissiveIntensity: 0.0 },
-  "ghost-paint": { opacity: 0.15, emissiveIntensity: 0.0 },
+  default:       { opacity: 0.85, emissiveIntensity: 0.0 },
+  highlighted:   { opacity: 1.0,  emissiveIntensity: 0.25 },
+  ghost:         { opacity: 0.08, emissiveIntensity: 0.0 },
+  "ghost-paint": { opacity: 0.12, emissiveIntensity: 0.0 },
 };
 
 interface CarModelProps {
@@ -85,7 +85,7 @@ function CarModel({ activeSlug }: CarModelProps) {
         const cloned = origMat.clone();
         cloned.transparent = true;
         cloned.opacity = 0.85;
-        cloned.emissive = new THREE.Color("#ffffff");
+        cloned.userData.originalEmissive = cloned.emissive.clone();
         cloned.emissiveIntensity = 0.0;
         cloned.depthWrite = true;
         cloned.name = matName;
@@ -115,6 +115,13 @@ function CarModel({ activeSlug }: CarModelProps) {
       const t = stateTargets[state];
 
       mat.depthWrite = state === "highlighted" || state === "default";
+
+      // Set emissive color: soft glow for highlighted, restore original otherwise
+      if (state === "highlighted") {
+        mat.emissive.set("#aabbcc");
+      } else {
+        mat.emissive.copy(mat.userData.originalEmissive);
+      }
 
       gsap.to(mat, {
         opacity: t.opacity,
@@ -187,9 +194,9 @@ export default function VolvoDiagnosisScene({ activeSlug }: VolvoDiagnosisSceneP
       camera={{ position: [6, 1.5, 6], fov: 35 }}
       style={{ background: "transparent" }}
     >
-      <ambientLight intensity={0.5} />
-      <directionalLight position={[5, 5, 5]} intensity={0.2} />
-      <directionalLight position={[-3, 2, -2]} intensity={0.1} />
+      <ambientLight intensity={0.7} />
+      <directionalLight position={[5, 5, 5]} intensity={0.4} />
+      <directionalLight position={[-3, 2, -2]} intensity={0.2} />
       <Environment preset="studio" />
       <CarModel activeSlug={activeSlug} />
     </Canvas>
