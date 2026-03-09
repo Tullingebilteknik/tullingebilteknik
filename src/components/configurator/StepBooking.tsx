@@ -63,14 +63,14 @@ export function StepBooking({
           value={name}
           onChange={(e) => onNameChange(e.target.value)}
           placeholder="Namn *"
-          className="w-full bg-transparent border-0 border-b border-white/20 focus:border-white text-white text-3xl sm:text-4xl font-heading font-300 tracking-tight py-6 outline-none transition-colors duration-300 placeholder:text-white/15 placeholder:font-300"
+          className="w-full bg-[#111111] border-b-2 border-white/20 hover:border-white/40 focus:border-[oklch(0.72_0.12_75)] text-white text-3xl sm:text-4xl font-heading font-300 tracking-tight px-5 py-5 outline-none transition-colors duration-300 cursor-text placeholder:text-white/15 placeholder:font-300"
         />
         <input
           type="tel"
           value={phone}
           onChange={(e) => onPhoneChange(e.target.value)}
           placeholder="Telefon *"
-          className="w-full bg-transparent border-0 border-b border-white/20 focus:border-white text-white text-3xl sm:text-4xl font-heading font-300 tracking-tight py-6 outline-none transition-colors duration-300 placeholder:text-white/15 placeholder:font-300"
+          className="w-full bg-[#111111] border-b-2 border-white/20 hover:border-white/40 focus:border-[oklch(0.72_0.12_75)] text-white text-3xl sm:text-4xl font-heading font-300 tracking-tight px-5 py-5 outline-none transition-colors duration-300 cursor-text placeholder:text-white/15 placeholder:font-300"
         />
       </div>
 

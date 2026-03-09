@@ -22,8 +22,8 @@ export default async function HomePage() {
       <Header />
       <main>
         <Hero />
-        <ServiceConfigurator />
         <ServiceGrid services={services || []} />
+        <ServiceConfigurator />
         <Testimonials />
         <CTABanner />
       </main>

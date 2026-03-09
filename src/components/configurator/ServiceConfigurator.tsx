@@ -119,6 +119,14 @@ export function ServiceConfigurator() {
       className="relative py-20 sm:py-28 px-4 sm:px-6"
       style={{ backgroundColor: "oklch(0.12 0.005 260)" }}
     >
+      {/* Eyebrow */}
+      <p
+        className="text-center text-xs font-semibold tracking-[0.2em] uppercase mb-10"
+        style={{ color: "oklch(0.72 0.12 75)" }}
+      >
+        Boka service
+      </p>
+
       {/* Step indicator */}
       <div className="flex items-center justify-center gap-8 mb-16">
         {stepLabels.map((label, i) => (
