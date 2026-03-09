@@ -39,12 +39,12 @@ function ChromeWheel() {
 
     const t = state.clock.elapsedTime;
     groupRef.current.rotation.x = mouse.current.y * 0.2 + 0.15 + Math.sin(t * 0.3) * 0.1;
-    groupRef.current.rotation.y = mouse.current.x * 0.2 - Math.PI / 2 + Math.sin(t * 0.2) * 0.15;
+    groupRef.current.rotation.y = mouse.current.x * 0.2 + Math.sin(t * 0.2) * 0.15;
   });
 
   return (
     <Float speed={1.5} rotationIntensity={0.2} floatIntensity={0.5}>
-      <group ref={groupRef} position={[2, 0, 0]} rotation={[0.3, 0, 0]}>
+      <group ref={groupRef} position={[2, 0, 0]} rotation={[0.2, 0, 0]}>
         <primitive object={scene} scale={0.9} />
       </group>
     </Float>
