@@ -44,21 +44,21 @@ export function StepServices({
               transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
               onClick={() => onToggleService(label)}
               whileTap={{ scale: 0.97 }}
-              className={`flex items-center gap-3 px-5 py-4 min-h-[48px] transition-all duration-200 cursor-pointer text-left ${
+              className={`flex items-center gap-3 px-4 py-4 min-h-[48px] transition-all duration-200 cursor-pointer text-left ${
                 isActive
-                  ? "border border-white bg-[#111111]"
+                  ? "border border-[oklch(0.72_0.12_75)] bg-[#111111]"
                   : "border border-transparent bg-[#111111]"
               }`}
             >
               <Icon
                 className={`h-5 w-5 flex-shrink-0 transition-colors duration-200 ${
-                  isActive ? "text-white" : "text-white/30"
+                  isActive ? "text-[oklch(0.72_0.12_75)]" : "text-white/40"
                 }`}
                 strokeWidth={1.5}
               />
               <span
-                className={`font-heading text-sm transition-colors duration-200 ${
-                  isActive ? "text-white" : "text-white/60"
+                className={`font-heading text-sm leading-tight transition-colors duration-200 ${
+                  isActive ? "text-white" : "text-white/50"
                 }`}
               >
                 {label}

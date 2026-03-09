@@ -304,6 +304,131 @@
   z-index: 0;
 }
 
+/* ─── Flatpickr dark premium theme ─── */
+@import "flatpickr/dist/flatpickr.min.css";
+
+.flatpickr-calendar {
+  background: #111111 !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  font-family: var(--font-heading) !important;
+  width: 100% !important;
+  max-width: 100% !important;
+}
+.flatpickr-calendar.static {
+  position: relative !important;
+  top: 4px !important;
+}
+.flatpickr-months {
+  background: transparent !important;
+}
+.flatpickr-months .flatpickr-month {
+  background: transparent !important;
+  color: white !important;
+  height: 40px !important;
+}
+.flatpickr-current-month {
+  font-size: 0.875rem !important;
+  font-weight: 400 !important;
+  letter-spacing: 0.05em !important;
+  text-transform: uppercase !important;
+  color: white !important;
+}
+.flatpickr-current-month .flatpickr-monthDropdown-months {
+  background: #111111 !important;
+  color: white !important;
+  border: none !important;
+  font-weight: 400 !important;
+}
+.flatpickr-current-month input.cur-year {
+  color: white !important;
+  font-weight: 400 !important;
+}
+.flatpickr-months .flatpickr-prev-month,
+.flatpickr-months .flatpickr-next-month {
+  fill: rgba(255, 255, 255, 0.4) !important;
+  color: rgba(255, 255, 255, 0.4) !important;
+}
+.flatpickr-months .flatpickr-prev-month:hover,
+.flatpickr-months .flatpickr-next-month:hover {
+  fill: white !important;
+  color: white !important;
+}
+.flatpickr-months .flatpickr-prev-month svg,
+.flatpickr-months .flatpickr-next-month svg {
+  fill: inherit !important;
+}
+span.flatpickr-weekday {
+  background: transparent !important;
+  color: rgba(255, 255, 255, 0.3) !important;
+  font-size: 0.6875rem !important;
+  font-weight: 500 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.05em !important;
+}
+.flatpickr-day {
+  background: transparent !important;
+  border: 1px solid transparent !important;
+  border-radius: 0 !important;
+  color: rgba(255, 255, 255, 0.6) !important;
+  font-size: 0.8125rem !important;
+  max-width: none !important;
+  height: 38px !important;
+  line-height: 38px !important;
+}
+.flatpickr-day:hover {
+  background: rgba(255, 255, 255, 0.05) !important;
+  border-color: rgba(255, 255, 255, 0.2) !important;
+}
+.flatpickr-day.today {
+  border-color: rgba(255, 255, 255, 0.2) !important;
+  color: white !important;
+}
+.flatpickr-day.selected,
+.flatpickr-day.selected:hover {
+  background: oklch(0.72 0.12 75) !important;
+  border-color: oklch(0.72 0.12 75) !important;
+  color: #0A0A0A !important;
+  font-weight: 600 !important;
+}
+.flatpickr-day.flatpickr-disabled,
+.flatpickr-day.prevMonthDay,
+.flatpickr-day.nextMonthDay {
+  color: rgba(255, 255, 255, 0.12) !important;
+}
+.flatpickr-day.flatpickr-disabled:hover {
+  background: transparent !important;
+  border-color: transparent !important;
+  cursor: default !important;
+}
+.dayContainer {
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 100% !important;
+}
+.flatpickr-days {
+  width: 100% !important;
+}
+.flatpickr-innerContainer {
+  border: none !important;
+}
+.flatpickr-rContainer {
+  width: 100% !important;
+}
+.numInputWrapper:hover {
+  background: transparent !important;
+}
+.numInputWrapper span {
+  border: none !important;
+}
+.numInputWrapper span::after {
+  border-color: rgba(255, 255, 255, 0.3) !important;
+}
+.numInputWrapper span:hover::after {
+  border-color: white !important;
+}
+
 /* ─── Configurator checkmark animation ─── */
 @keyframes check-draw {
   to {

@@ -25,7 +25,7 @@ export function StepVehicle({
         Vilken bil gäller det?
       </h2>
 
-      <div className="w-full space-y-8">
+      <div className="w-full space-y-12">
         <div className="relative">
           <input
             type="text"
@@ -33,7 +33,7 @@ export function StepVehicle({
             onChange={(e) => onRegNumberChange(e.target.value.toUpperCase())}
             autoCapitalize="characters"
             placeholder="Registernummer"
-            className="w-full bg-transparent border-0 border-b border-white/20 focus:border-white text-white text-lg py-4 outline-none transition-colors duration-300 placeholder:text-white/30"
+            className="w-full bg-transparent border-0 border-b border-white/20 focus:border-white text-white text-3xl sm:text-4xl font-heading font-300 tracking-tight py-6 outline-none transition-colors duration-300 placeholder:text-white/15 placeholder:font-300"
           />
         </div>
         <div className="relative">
@@ -42,7 +42,7 @@ export function StepVehicle({
             value={carModel}
             onChange={(e) => onCarModelChange(e.target.value)}
             placeholder="Bilmärke & Modell"
-            className="w-full bg-transparent border-0 border-b border-white/20 focus:border-white text-white text-lg py-4 outline-none transition-colors duration-300 placeholder:text-white/30"
+            className="w-full bg-transparent border-0 border-b border-white/20 focus:border-white text-white text-3xl sm:text-4xl font-heading font-300 tracking-tight py-6 outline-none transition-colors duration-300 placeholder:text-white/15 placeholder:font-300"
           />
         </div>
       </div>

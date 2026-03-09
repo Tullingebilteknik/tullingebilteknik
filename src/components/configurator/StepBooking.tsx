@@ -1,7 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { motion } from "framer-motion";
+import flatpickr from "flatpickr";
+import { Swedish } from "flatpickr/dist/l10n/sv";
 
 interface StepBookingProps {
   name: string;
@@ -25,8 +27,28 @@ export function StepBooking({
   error,
 }: StepBookingProps) {
   const [selectedDate, setSelectedDate] = useState("");
-  const today = new Date().toISOString().split("T")[0];
+  const dateRef = useRef<HTMLInputElement>(null);
+  const fpRef = useRef<flatpickr.Instance | null>(null);
   const canSubmit = name.trim().length >= 2 && phone.trim().length >= 3;
+
+  useEffect(() => {
+    if (!dateRef.current) return;
+
+    fpRef.current = flatpickr(dateRef.current, {
+      minDate: "today",
+      dateFormat: "Y-m-d",
+      disableMobile: true,
+      static: true,
+      locale: Swedish,
+      onChange: (_dates, dateStr) => {
+        setSelectedDate(dateStr);
+      },
+    });
+
+    return () => {
+      fpRef.current?.destroy();
+    };
+  }, []);
 
   return (
     <div className="flex flex-col items-center w-full max-w-md mx-auto min-h-[60vh] md:min-h-0 pb-24 md:pb-0">
@@ -35,20 +57,20 @@ export function StepBooking({
       </h2>
 
       {/* Contact fields */}
-      <div className="w-full space-y-8 mb-12">
+      <div className="w-full space-y-12 mb-14">
         <input
           type="text"
           value={name}
           onChange={(e) => onNameChange(e.target.value)}
           placeholder="Namn *"
-          className="w-full bg-transparent border-0 border-b border-white/20 focus:border-white text-white text-lg py-4 outline-none transition-colors duration-300 placeholder:text-white/30"
+          className="w-full bg-transparent border-0 border-b border-white/20 focus:border-white text-white text-3xl sm:text-4xl font-heading font-300 tracking-tight py-6 outline-none transition-colors duration-300 placeholder:text-white/15 placeholder:font-300"
         />
         <input
           type="tel"
           value={phone}
           onChange={(e) => onPhoneChange(e.target.value)}
           placeholder="Telefon *"
-          className="w-full bg-transparent border-0 border-b border-white/20 focus:border-white text-white text-lg py-4 outline-none transition-colors duration-300 placeholder:text-white/30"
+          className="w-full bg-transparent border-0 border-b border-white/20 focus:border-white text-white text-3xl sm:text-4xl font-heading font-300 tracking-tight py-6 outline-none transition-colors duration-300 placeholder:text-white/15 placeholder:font-300"
         />
       </div>
 
@@ -57,7 +79,7 @@ export function StepBooking({
         onClick={() => onSubmit("Snarast")}
         disabled={!canSubmit || loading}
         whileTap={{ scale: 0.98 }}
-        className="w-full sm:w-auto px-12 py-5 min-h-[56px] font-heading font-600 text-lg transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed"
+        className="w-full px-12 py-5 min-h-[56px] font-heading font-600 text-lg tracking-wide transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed"
         style={{
           backgroundColor: "oklch(0.72 0.12 75)",
           color: "#0A0A0A",
@@ -66,36 +88,35 @@ export function StepBooking({
         {loading ? "Skickar..." : "Snarast möjligt"}
       </motion.button>
 
-      <p className="text-white/30 text-sm text-center mt-3 max-w-xs">
+      <p className="text-white/30 text-sm text-center mt-4 max-w-xs">
         Vi ringer upp dig direkt för att bekräfta en tid som passar.
       </p>
 
       {/* Divider */}
-      <div className="flex items-center gap-4 w-full my-8">
+      <div className="flex items-center gap-4 w-full my-10">
         <div className="flex-1 h-px bg-white/10" />
-        <span className="text-white/20 text-xs uppercase tracking-widest font-heading">
+        <span className="text-white/20 text-xs uppercase tracking-widest font-heading whitespace-nowrap">
           eller välj datum
         </span>
         <div className="flex-1 h-px bg-white/10" />
       </div>
 
-      {/* Date picker */}
-      <div className="w-full flex gap-3">
+      {/* Flatpickr date picker */}
+      <div className="w-full space-y-3">
         <input
-          type="date"
-          value={selectedDate}
-          onChange={(e) => setSelectedDate(e.target.value)}
-          min={today}
-          style={{ colorScheme: "dark" }}
-          className="flex-1 bg-transparent border border-white/20 text-white px-4 py-3 text-sm outline-none focus:border-white transition-colors duration-300"
+          ref={dateRef}
+          type="text"
+          readOnly
+          placeholder="Välj datum"
+          className="w-full bg-transparent border border-white/20 text-white text-sm px-4 py-4 outline-none focus:border-white/50 transition-colors duration-300 cursor-pointer placeholder:text-white/30 font-heading tracking-wide"
         />
         <motion.button
           onClick={() => onSubmit(selectedDate)}
           disabled={!canSubmit || !selectedDate || loading}
           whileTap={{ scale: 0.98 }}
-          className="px-6 py-3 font-heading text-sm tracking-wider uppercase text-white border border-white/20 transition-all duration-200 disabled:opacity-30 disabled:cursor-not-allowed hover:border-white"
+          className="w-full py-4 font-heading text-sm tracking-wider uppercase text-white border border-white/20 transition-all duration-200 disabled:opacity-30 disabled:cursor-not-allowed hover:border-white"
         >
-          Boka
+          {loading ? "Skickar..." : "Boka vald dag"}
         </motion.button>
       </div>
 
