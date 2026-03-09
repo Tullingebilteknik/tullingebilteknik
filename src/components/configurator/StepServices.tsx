@@ -24,13 +24,13 @@ export function StepServices({
   const canProceed = selectedServices.length > 0;
 
   return (
-    <div className="flex flex-col items-center w-full max-w-2xl mx-auto min-h-[60vh] md:min-h-0 pb-24 md:pb-0">
+    <div className="flex flex-col items-center w-full max-w-3xl mx-auto min-h-[60vh] md:min-h-0 pb-24 md:pb-0">
       <h2 className="font-heading text-3xl sm:text-4xl md:text-5xl font-300 text-white tracking-tight text-center mb-12">
         Vad behöver bilen hjälp med?
       </h2>
 
       <motion.div
-        className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 w-full"
+        className="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full"
         initial="hidden"
         animate="visible"
         transition={{ staggerChildren: 0.04 }}
