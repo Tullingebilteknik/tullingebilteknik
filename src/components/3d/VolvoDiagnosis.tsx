@@ -17,7 +17,7 @@ const serviceHighlightMap: Record<string, string[]> = {
   "felsökning-diagnostik": ["LightA", "RED_GLASS", "InteriorA", "EngineA"],
   "besiktningsförberedelse": ["LightA", "RED_GLASS", "Window", "Wheel", "Calliper", "Paint"],
   "oljebyte": ["EngineA"],
-  "avgassystem": ["EngineA", "Paint", "Grille"],
+  "avgassystem": [],
   "koppling-vaxellada": ["EngineA"],
   "elektronik-elsystem": ["LightA", "RED_GLASS", "InteriorA"],
 };
@@ -35,7 +35,7 @@ function classifyMaterial(
   matName: string
 ): MaterialState {
   const normalized = slug?.normalize("NFC") ?? null;
-  const isFullService = normalized === "service-underhall" || normalized === "besiktningsförberedelse";
+  const isFullService = normalized === "service-underhall" || normalized === "besiktningsförberedelse" || normalized === "avgassystem";
   const keywords = normalized ? serviceHighlightMap[normalized] || [] : [];
   const hasActive = normalized != null && (isFullService || keywords.length > 0);
 

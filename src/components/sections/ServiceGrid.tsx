@@ -47,7 +47,7 @@ export function ServiceGrid({ services }: ServiceGridProps) {
   return (
     <>
       {/* Dark-to-light transition */}
-      <div className="h-16 bg-gradient-to-b from-[oklch(0.12_0.005_260)] via-[oklch(0.35_0.005_260)] to-transparent" />
+      <div className="h-32 bg-gradient-to-b from-[oklch(0.12_0.005_260)] via-[oklch(0.55_0.003_260)] to-white" />
 
       <section className="py-12 sm:py-20 bg-white tech-surface relative overflow-hidden">
         {/* Full-section 3D Volvo background — desktop only */}
