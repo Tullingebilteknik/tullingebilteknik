@@ -1,11 +1,10 @@
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { Hero } from "@/components/sections/Hero";
+import { ServiceConfigurator } from "@/components/configurator/ServiceConfigurator";
 import { ServiceGrid } from "@/components/sections/ServiceGrid";
-import { WhyUs } from "@/components/sections/WhyUs";
 import { Testimonials } from "@/components/sections/Testimonials";
 import { CTABanner } from "@/components/sections/CTABanner";
-import { DiagnosticWizard } from "@/components/forms/DiagnosticWizard";
 import { createClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
@@ -23,30 +22,9 @@ export default async function HomePage() {
       <Header />
       <main>
         <Hero />
+        <ServiceConfigurator />
         <ServiceGrid services={services || []} />
-        <WhyUs />
         <Testimonials />
-
-        {/* Diagnostic Wizard */}
-        <section className="py-24 sm:py-32 bg-white border-t border-border/50">
-          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-            <div className="mb-12">
-              <span className="font-mono text-[11px] tracking-[0.2em] uppercase text-muted-foreground">
-                Boka tid
-              </span>
-              <h2 className="font-heading text-3xl sm:text-4xl font-700 text-foreground mt-3">
-                Beskriv ditt ärende
-              </h2>
-              <p className="mt-4 text-muted-foreground max-w-xl">
-                Fyll i formuläret nedan så återkommer vi med en tid som passar dig.
-              </p>
-            </div>
-            <div className="max-w-2xl mx-auto">
-              <DiagnosticWizard />
-            </div>
-          </div>
-        </section>
-
         <CTABanner />
       </main>
       <Footer />

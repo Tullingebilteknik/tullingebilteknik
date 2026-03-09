@@ -35,4 +35,8 @@ export interface Lead {
   notes: string | null;
   source_page: string;
   created_at: string;
+  reg_number: string | null;
+  car_model: string | null;
+  selected_services: string[] | null;
+  preferred_time: string | null;
 }

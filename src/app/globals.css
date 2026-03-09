@@ -304,6 +304,23 @@
   z-index: 0;
 }
 
+/* ─── Configurator checkmark animation ─── */
+@keyframes check-draw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+.configurator-check circle {
+  stroke-dasharray: 166;
+  stroke-dashoffset: 166;
+  animation: check-draw 0.6s cubic-bezier(0.22, 1, 0.36, 1) 0.2s forwards;
+}
+.configurator-check path {
+  stroke-dasharray: 48;
+  stroke-dashoffset: 48;
+  animation: check-draw 0.4s cubic-bezier(0.22, 1, 0.36, 1) 0.6s forwards;
+}
+
 /* ─── Success check indicator ─── */
 .success-check {
   display: inline-flex;

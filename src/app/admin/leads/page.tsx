@@ -27,7 +27,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Phone, Mail, MessageSquare, Filter } from "lucide-react";
+import { Phone, Mail, MessageSquare, Filter, AlertCircle } from "lucide-react";
 
 const statusLabels: Record<string, string> = {
   new: "Ny",
@@ -104,8 +104,10 @@ export default function AdminLeadsPage() {
           <TableHeader>
             <TableRow>
               <TableHead>Namn</TableHead>
+              <TableHead>Fordon</TableHead>
               <TableHead>Kontakt</TableHead>
               <TableHead>Tjänst</TableHead>
+              <TableHead>Tid</TableHead>
               <TableHead>Status</TableHead>
               <TableHead>Datum</TableHead>
               <TableHead className="w-16"></TableHead>
@@ -114,14 +116,24 @@ export default function AdminLeadsPage() {
           <TableBody>
             {filteredLeads.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={6} className="text-center py-8 text-slate-500">
+                <TableCell colSpan={8} className="text-center py-8 text-slate-500">
                   Inga leads att visa.
                 </TableCell>
               </TableRow>
             ) : (
               filteredLeads.map((lead) => (
                 <TableRow key={lead.id} className="cursor-pointer hover:bg-slate-50">
-                  <TableCell className="font-medium">{lead.name}</TableCell>
+                  <TableCell className={`font-medium ${lead.preferred_time === "Snarast" ? "font-bold" : ""}`}>
+                    {lead.name}
+                  </TableCell>
+                  <TableCell className="text-sm text-slate-500">
+                    {lead.reg_number || lead.car_model ? (
+                      <div>
+                        {lead.reg_number && <span className="font-mono font-medium text-slate-700">{lead.reg_number}</span>}
+                        {lead.car_model && <p className="text-xs">{lead.car_model}</p>}
+                      </div>
+                    ) : "—"}
+                  </TableCell>
                   <TableCell>
                     <div className="flex flex-col gap-1 text-sm">
                       {lead.phone && (
@@ -137,7 +149,18 @@ export default function AdminLeadsPage() {
                     </div>
                   </TableCell>
                   <TableCell className="text-sm text-slate-500">
-                    {lead.service_interest || "—"}
+                    {lead.selected_services?.length
+                      ? lead.selected_services.join(", ")
+                      : lead.service_interest || "—"}
+                  </TableCell>
+                  <TableCell className="text-sm">
+                    {lead.preferred_time === "Snarast" ? (
+                      <span className="inline-flex items-center gap-1 text-red-600 font-semibold">
+                        <AlertCircle className="h-3.5 w-3.5" /> Snarast
+                      </span>
+                    ) : lead.preferred_time ? (
+                      <span className="text-slate-500">{lead.preferred_time}</span>
+                    ) : "—"}
                   </TableCell>
                   <TableCell>
                     <Select
@@ -199,9 +222,39 @@ export default function AdminLeadsPage() {
                     {selectedLead.email || "—"}
                   </a>
                 </div>
+                {selectedLead.reg_number && (
+                  <div>
+                    <p className="text-slate-500">Registreringsnummer</p>
+                    <p className="font-mono font-semibold">{selectedLead.reg_number}</p>
+                  </div>
+                )}
+                {selectedLead.car_model && (
+                  <div>
+                    <p className="text-slate-500">Bil</p>
+                    <p className="font-medium">{selectedLead.car_model}</p>
+                  </div>
+                )}
                 <div>
-                  <p className="text-slate-500">Tjänst</p>
-                  <p className="font-medium">{selectedLead.service_interest || "—"}</p>
+                  <p className="text-slate-500">Tjänster</p>
+                  {selectedLead.selected_services?.length ? (
+                    <div className="flex flex-wrap gap-1 mt-1">
+                      {selectedLead.selected_services.map((s) => (
+                        <Badge key={s} variant="secondary" className="text-xs">{s}</Badge>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="font-medium">{selectedLead.service_interest || "—"}</p>
+                  )}
+                </div>
+                <div>
+                  <p className="text-slate-500">Önskad tid</p>
+                  {selectedLead.preferred_time === "Snarast" ? (
+                    <p className="font-semibold text-red-600 flex items-center gap-1">
+                      <AlertCircle className="h-3.5 w-3.5" /> Snarast
+                    </p>
+                  ) : (
+                    <p className="font-medium">{selectedLead.preferred_time || "—"}</p>
+                  )}
                 </div>
                 <div>
                   <p className="text-slate-500">Källa</p>
