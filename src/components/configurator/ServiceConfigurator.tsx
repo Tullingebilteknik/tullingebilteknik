@@ -24,6 +24,7 @@ export function ServiceConfigurator() {
   const [selectedServices, setSelectedServices] = useState<string[]>([]);
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
+  const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState("");
@@ -37,8 +38,8 @@ export function ServiceConfigurator() {
   }
 
   async function handleSubmit(preferredTime: string) {
-    if (!name.trim() || !phone.trim()) {
-      setError("Namn och telefon krävs.");
+    if (!name.trim() || !phone.trim() || !email.trim()) {
+      setError("Namn, telefon och e-post krävs.");
       return;
     }
 
@@ -49,7 +50,7 @@ export function ServiceConfigurator() {
     const { error: insertError } = await supabase.from("leads").insert({
       name: name.trim(),
       phone: phone.trim(),
-      email: null,
+      email: email.trim(),
       service_interest: selectedServices.join(", ") || null,
       message: `Reg.nr: ${regNumber.trim()}\nBil: ${carModel.trim()}\nÖnskad tid: ${preferredTime}`,
       source_page: "service-configurator",
@@ -207,8 +208,10 @@ export function ServiceConfigurator() {
             <StepBooking
               name={name}
               phone={phone}
+              email={email}
               onNameChange={setName}
               onPhoneChange={setPhone}
+              onEmailChange={setEmail}
               onSubmit={handleSubmit}
               onBack={() => setStep(1)}
               loading={loading}

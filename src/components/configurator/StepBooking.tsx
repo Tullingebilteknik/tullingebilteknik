@@ -8,8 +8,10 @@ import { Swedish } from "flatpickr/dist/l10n/sv";
 interface StepBookingProps {
   name: string;
   phone: string;
+  email: string;
   onNameChange: (v: string) => void;
   onPhoneChange: (v: string) => void;
+  onEmailChange: (v: string) => void;
   onSubmit: (preferredTime: string) => void;
   onBack: () => void;
   loading: boolean;
@@ -19,8 +21,10 @@ interface StepBookingProps {
 export function StepBooking({
   name,
   phone,
+  email,
   onNameChange,
   onPhoneChange,
+  onEmailChange,
   onSubmit,
   onBack,
   loading,
@@ -29,7 +33,7 @@ export function StepBooking({
   const [selectedDate, setSelectedDate] = useState("");
   const dateRef = useRef<HTMLInputElement>(null);
   const fpRef = useRef<flatpickr.Instance | null>(null);
-  const canSubmit = name.trim().length >= 2 && phone.trim().length >= 3;
+  const canSubmit = name.trim().length >= 2 && phone.trim().length >= 3 && email.trim().includes("@");
 
   useEffect(() => {
     if (!dateRef.current) return;
@@ -70,6 +74,13 @@ export function StepBooking({
           value={phone}
           onChange={(e) => onPhoneChange(e.target.value)}
           placeholder="Telefon *"
+          className="w-full bg-[#111111] border-b-2 border-white/20 hover:border-white/40 focus:border-[oklch(0.72_0.12_75)] text-white text-3xl sm:text-4xl font-heading font-300 tracking-tight px-5 py-5 outline-none transition-colors duration-300 cursor-text placeholder:text-white/15 placeholder:font-300"
+        />
+        <input
+          type="email"
+          value={email}
+          onChange={(e) => onEmailChange(e.target.value)}
+          placeholder="E-post *"
           className="w-full bg-[#111111] border-b-2 border-white/20 hover:border-white/40 focus:border-[oklch(0.72_0.12_75)] text-white text-3xl sm:text-4xl font-heading font-300 tracking-tight px-5 py-5 outline-none transition-colors duration-300 cursor-text placeholder:text-white/15 placeholder:font-300"
         />
       </div>

@@ -122,7 +122,14 @@ export default function AdminLeadsPage() {
               </TableRow>
             ) : (
               filteredLeads.map((lead) => (
-                <TableRow key={lead.id} className="cursor-pointer hover:bg-slate-50">
+                <TableRow
+                  key={lead.id}
+                  className="cursor-pointer hover:bg-slate-50"
+                  onClick={() => {
+                    setSelectedLead(lead);
+                    setNotes(lead.notes || "");
+                  }}
+                >
                   <TableCell className={`font-medium ${lead.preferred_time === "Snarast" ? "font-bold" : ""}`}>
                     {lead.name}
                   </TableCell>
