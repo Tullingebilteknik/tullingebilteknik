@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
-import type { Lead } from "@/lib/types";
+import type { Lead, Mechanic } from "@/lib/types";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -27,18 +27,21 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Phone, Mail, MessageSquare, Filter, AlertCircle } from "lucide-react";
+import { BookingDialog } from "@/components/admin/BookingDialog";
+import { Phone, Mail, MessageSquare, Filter, AlertCircle, CalendarPlus } from "lucide-react";
 
 const statusLabels: Record<string, string> = {
   new: "Ny",
-  contacted: "Kontaktad",
-  done: "Klar",
+  booked: "Bokad",
+  in_progress: "Pågående",
+  completed: "Färdigställd",
 };
 
 const statusColors: Record<string, string> = {
   new: "bg-amber-100 text-amber-800",
-  contacted: "bg-blue-100 text-blue-800",
-  done: "bg-green-100 text-green-800",
+  booked: "bg-blue-100 text-blue-800",
+  in_progress: "bg-purple-100 text-purple-800",
+  completed: "bg-green-100 text-green-800",
 };
 
 export default function AdminLeadsPage() {
@@ -46,10 +49,13 @@ export default function AdminLeadsPage() {
   const [filter, setFilter] = useState<string>("all");
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
   const [notes, setNotes] = useState("");
+  const [bookingLead, setBookingLead] = useState<Lead | null>(null);
+  const [mechanics, setMechanics] = useState<Mechanic[]>([]);
   const supabase = createClient();
 
   useEffect(() => {
     loadLeads();
+    loadMechanics();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -59,6 +65,15 @@ export default function AdminLeadsPage() {
       .select("*")
       .order("created_at", { ascending: false });
     if (data) setLeads(data);
+  }
+
+  async function loadMechanics() {
+    const { data } = await supabase
+      .from("mechanics")
+      .select("*")
+      .eq("is_active", true)
+      .order("name");
+    if (data) setMechanics(data);
   }
 
   async function updateStatus(id: string, status: string) {
@@ -92,8 +107,9 @@ export default function AdminLeadsPage() {
             <SelectContent>
               <SelectItem value="all">Alla</SelectItem>
               <SelectItem value="new">Nya</SelectItem>
-              <SelectItem value="contacted">Kontaktade</SelectItem>
-              <SelectItem value="done">Klara</SelectItem>
+              <SelectItem value="booked">Bokade</SelectItem>
+              <SelectItem value="in_progress">Pågående</SelectItem>
+              <SelectItem value="completed">Färdigställda</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -110,7 +126,7 @@ export default function AdminLeadsPage() {
               <TableHead>Tid</TableHead>
               <TableHead>Status</TableHead>
               <TableHead>Datum</TableHead>
-              <TableHead className="w-16"></TableHead>
+              <TableHead className="w-24"></TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -144,12 +160,12 @@ export default function AdminLeadsPage() {
                   <TableCell>
                     <div className="flex flex-col gap-1 text-sm">
                       {lead.phone && (
-                        <a href={`tel:${lead.phone}`} className="flex items-center gap-1 text-slate-600 hover:text-slate-900">
+                        <a href={`tel:${lead.phone}`} className="flex items-center gap-1 text-slate-600 hover:text-slate-900" onClick={(e) => e.stopPropagation()}>
                           <Phone className="h-3 w-3" /> {lead.phone}
                         </a>
                       )}
                       {lead.email && (
-                        <a href={`mailto:${lead.email}`} className="flex items-center gap-1 text-slate-600 hover:text-slate-900">
+                        <a href={`mailto:${lead.email}`} className="flex items-center gap-1 text-slate-600 hover:text-slate-900" onClick={(e) => e.stopPropagation()}>
                           <Mail className="h-3 w-3" /> {lead.email}
                         </a>
                       )}
@@ -174,15 +190,16 @@ export default function AdminLeadsPage() {
                       value={lead.status}
                       onValueChange={(val) => updateStatus(lead.id, val)}
                     >
-                      <SelectTrigger className="w-32 h-8">
+                      <SelectTrigger className="w-36 h-8" onClick={(e) => e.stopPropagation()}>
                         <Badge className={`${statusColors[lead.status]} border-0`}>
                           {statusLabels[lead.status]}
                         </Badge>
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="new">Ny</SelectItem>
-                        <SelectItem value="contacted">Kontaktad</SelectItem>
-                        <SelectItem value="done">Klar</SelectItem>
+                        <SelectItem value="booked">Bokad</SelectItem>
+                        <SelectItem value="in_progress">Pågående</SelectItem>
+                        <SelectItem value="completed">Färdigställd</SelectItem>
                       </SelectContent>
                     </Select>
                   </TableCell>
@@ -190,16 +207,33 @@ export default function AdminLeadsPage() {
                     {new Date(lead.created_at).toLocaleDateString("sv-SE")}
                   </TableCell>
                   <TableCell>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => {
-                        setSelectedLead(lead);
-                        setNotes(lead.notes || "");
-                      }}
-                    >
-                      <MessageSquare className="h-4 w-4" />
-                    </Button>
+                    <div className="flex gap-1">
+                      {lead.status === "new" && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="text-amber-600 hover:text-amber-700 hover:bg-amber-50"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setBookingLead(lead);
+                          }}
+                          title="Boka in"
+                        >
+                          <CalendarPlus className="h-4 w-4" />
+                        </Button>
+                      )}
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSelectedLead(lead);
+                          setNotes(lead.notes || "");
+                        }}
+                      >
+                        <MessageSquare className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </TableCell>
                 </TableRow>
               ))
@@ -282,14 +316,39 @@ export default function AdminLeadsPage() {
                   placeholder="Skriv anteckningar här..."
                   rows={3}
                 />
-                <Button size="sm" className="mt-2" onClick={saveNotes}>
-                  Spara anteckningar
-                </Button>
+                <div className="flex gap-2 mt-2">
+                  <Button size="sm" onClick={saveNotes}>
+                    Spara anteckningar
+                  </Button>
+                  {selectedLead.status === "new" && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="text-amber-700 border-amber-300 hover:bg-amber-50"
+                      onClick={() => {
+                        setBookingLead(selectedLead);
+                        setSelectedLead(null);
+                      }}
+                    >
+                      <CalendarPlus className="h-4 w-4 mr-1" />
+                      Boka in
+                    </Button>
+                  )}
+                </div>
               </div>
             </div>
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Booking Dialog */}
+      <BookingDialog
+        open={!!bookingLead}
+        onOpenChange={(open) => !open && setBookingLead(null)}
+        lead={bookingLead}
+        mechanics={mechanics}
+        onSaved={loadLeads}
+      />
     </div>
   );
 }

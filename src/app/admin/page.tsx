@@ -1,6 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Users, FileText, Wrench, TrendingUp } from "lucide-react";
+import { Users, FileText, Wrench, TrendingUp, CalendarDays, Clock } from "lucide-react";
 import Link from "next/link";
 
 export const dynamic = "force-dynamic";
@@ -8,11 +8,15 @@ export const dynamic = "force-dynamic";
 export default async function AdminDashboard() {
   const supabase = await createClient();
 
+  const today = new Date().toISOString().split("T")[0];
+
   const [
     { count: leadCount },
     { count: newLeadCount },
     { count: articleCount },
     { count: serviceCount },
+    { count: todayBookings },
+    { count: inProgressCount },
   ] = await Promise.all([
     supabase.from("leads").select("*", { count: "exact", head: true }),
     supabase
@@ -27,9 +31,31 @@ export default async function AdminDashboard() {
       .from("services")
       .select("*", { count: "exact", head: true })
       .eq("is_visible", true),
+    supabase
+      .from("bookings")
+      .select("*", { count: "exact", head: true })
+      .eq("scheduled_date", today),
+    supabase
+      .from("leads")
+      .select("*", { count: "exact", head: true })
+      .eq("status", "in_progress"),
   ]);
 
   const stats = [
+    {
+      title: "Dagens bokningar",
+      value: todayBookings || 0,
+      icon: CalendarDays,
+      href: "/admin/schema",
+      color: "text-orange-600 bg-orange-100",
+    },
+    {
+      title: "Pågående jobb",
+      value: inProgressCount || 0,
+      icon: Clock,
+      href: "/admin/leads",
+      color: "text-purple-600 bg-purple-100",
+    },
     {
       title: "Nya leads",
       value: newLeadCount || 0,
@@ -56,7 +82,7 @@ export default async function AdminDashboard() {
       value: serviceCount || 0,
       icon: Wrench,
       href: "/admin/tjanster",
-      color: "text-purple-600 bg-purple-100",
+      color: "text-slate-600 bg-slate-100",
     },
   ];
 
@@ -64,7 +90,7 @@ export default async function AdminDashboard() {
     <div>
       <h1 className="text-2xl font-bold text-slate-900 mb-6">Dashboard</h1>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
         {stats.map((stat) => {
           const Icon = stat.icon;
           return (

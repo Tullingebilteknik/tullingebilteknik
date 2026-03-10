@@ -31,7 +31,7 @@ export interface Lead {
   phone: string;
   service_interest: string | null;
   message: string;
-  status: "new" | "contacted" | "done";
+  status: "new" | "booked" | "in_progress" | "completed";
   notes: string | null;
   source_page: string;
   created_at: string;
@@ -39,4 +39,28 @@ export interface Lead {
   car_model: string | null;
   selected_services: string[] | null;
   preferred_time: string | null;
+}
+
+export interface Mechanic {
+  id: string;
+  name: string;
+  email: string | null;
+  is_active: boolean;
+  created_at: string;
+}
+
+export interface Booking {
+  id: string;
+  lead_id: string;
+  mechanic_id: string;
+  scheduled_date: string;
+  start_time: string;
+  end_time: string;
+  notes: string | null;
+  created_at: string;
+}
+
+export interface BookingWithDetails extends Booking {
+  lead: Pick<Lead, "id" | "name" | "phone" | "reg_number" | "car_model" | "selected_services" | "service_interest">;
+  mechanic: Pick<Mechanic, "id" | "name">;
 }

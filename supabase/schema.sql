@@ -88,7 +88,11 @@ create table public.leads (
   phone text not null default '',
   service_interest text,
   message text not null default '',
-  status text not null default 'new' check (status in ('new', 'contacted', 'done')),
+  status text not null default 'new' check (status in ('new', 'booked', 'in_progress', 'completed')),
+  reg_number text,
+  car_model text,
+  selected_services text[],
+  preferred_time text,
   notes text,
   source_page text not null default '',
   created_at timestamptz not null default now()
@@ -114,6 +118,61 @@ create policy "Authenticated users can delete leads"
   on public.leads for delete
   to authenticated
   using (true);
+
+-- ============================================
+-- MECHANICS TABLE
+-- ============================================
+create table public.mechanics (
+  id uuid default gen_random_uuid() primary key,
+  name text not null,
+  email text unique,
+  is_active boolean default true,
+  created_at timestamptz not null default now()
+);
+
+alter table public.mechanics enable row level security;
+
+create policy "Authenticated users can read mechanics"
+  on public.mechanics for select
+  to authenticated
+  using (true);
+
+create policy "Authenticated users can manage mechanics"
+  on public.mechanics for all
+  to authenticated
+  using (true)
+  with check (true);
+
+-- ============================================
+-- BOOKINGS TABLE
+-- ============================================
+create table public.bookings (
+  id uuid default gen_random_uuid() primary key,
+  lead_id uuid not null references public.leads(id) on delete cascade,
+  mechanic_id uuid not null references public.mechanics(id) on delete restrict,
+  scheduled_date date not null,
+  start_time time not null,
+  end_time time not null,
+  notes text,
+  created_at timestamptz not null default now(),
+  constraint valid_time_range check (end_time > start_time)
+);
+
+create index idx_bookings_date on public.bookings(scheduled_date);
+create index idx_bookings_mechanic on public.bookings(mechanic_id, scheduled_date);
+
+alter table public.bookings enable row level security;
+
+create policy "Authenticated users can read bookings"
+  on public.bookings for select
+  to authenticated
+  using (true);
+
+create policy "Authenticated users can manage bookings"
+  on public.bookings for all
+  to authenticated
+  using (true)
+  with check (true);
 
 -- ============================================
 -- UPDATED_AT TRIGGER
