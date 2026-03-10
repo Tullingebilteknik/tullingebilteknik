@@ -5,6 +5,7 @@ import { ServiceConfigurator } from "@/components/configurator/ServiceConfigurat
 import { ServiceGrid } from "@/components/sections/ServiceGrid";
 import { Testimonials } from "@/components/sections/Testimonials";
 import { CTABanner } from "@/components/sections/CTABanner";
+import { TrustBanner } from "@/components/sections/TrustBanner";
 import { createClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
@@ -23,6 +24,7 @@ export default async function HomePage() {
       <main>
         <Hero />
         <ServiceGrid services={services || []} />
+        <TrustBanner />
         <ServiceConfigurator />
         <Testimonials />
         <CTABanner />

@@ -49,7 +49,7 @@ export function ServiceGrid({ services }: ServiceGridProps) {
       {/* Dark-to-light transition */}
       <div className="h-32 bg-gradient-to-b from-[oklch(0.12_0.005_260)] via-[oklch(0.55_0.003_260)] to-white" />
 
-      <section className="py-12 sm:py-20 bg-white tech-surface relative overflow-hidden">
+      <section id="tjanster" className="py-12 sm:py-20 bg-white tech-surface relative overflow-hidden">
         {/* Full-section 3D Volvo background — desktop only */}
         <div className="hidden lg:block absolute inset-0 z-0 pointer-events-none">
           <Suspense fallback={null}>
@@ -88,12 +88,21 @@ export function ServiceGrid({ services }: ServiceGridProps) {
                     {num}
                   </span>
                   <Icon className="h-5 w-5 text-muted-foreground/30 group-hover:text-primary transition-colors shrink-0" />
-                  <span className="font-heading text-lg font-600 text-foreground/70 group-hover:text-foreground transition-colors">
-                    {service.title}
-                  </span>
-                  <span className="ml-auto text-muted-foreground/30 group-hover:text-primary group-hover:translate-x-1 transition-all">
+                  <div className="flex flex-col">
+                    <span className="font-heading text-lg font-600 text-foreground/70 group-hover:text-foreground transition-colors">
+                      {service.title}
+                    </span>
+                    <span className="text-xs text-primary/0 group-hover:text-primary transition-colors duration-200">
+                      Boka service &rarr;
+                    </span>
+                  </div>
+                  <a
+                    href="#boka"
+                    onClick={(e) => e.stopPropagation()}
+                    className="ml-auto text-muted-foreground/30 group-hover:text-primary group-hover:translate-x-1 transition-all"
+                  >
                     &rarr;
-                  </span>
+                  </a>
                 </Link>
               );
             })}
@@ -116,7 +125,14 @@ export function ServiceGrid({ services }: ServiceGridProps) {
                   <div>
                     <span className="font-mono text-[10px] text-muted-foreground/40">{num}</span>
                     <h3 className="font-heading font-600 text-foreground mb-1">{service.title}</h3>
-                    <p className="text-sm text-muted-foreground leading-relaxed">{service.description}</p>
+                    <p className="text-sm text-muted-foreground leading-relaxed mb-2">{service.description}</p>
+                    <a
+                      href="#boka"
+                      onClick={(e) => e.stopPropagation()}
+                      className="text-xs font-500 text-primary hover:text-primary/80 transition-colors"
+                    >
+                      Boka &rarr;
+                    </a>
                   </div>
                 </Link>
               );

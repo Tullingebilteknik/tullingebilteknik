@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { Menu, X } from "lucide-react";
+import { Menu, X, Phone } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet";
 
@@ -42,14 +42,31 @@ export function Header() {
           ))}
         </nav>
 
-        {/* CTA + Mobile */}
+        {/* CTA + Phone + Mobile */}
         <div className="flex items-center gap-3">
-          <Link
-            href="/kontakt"
+          {/* Desktop: phone number */}
+          <a
+            href="tel:0812345678"
+            className="hidden md:inline-flex items-center gap-1.5 font-mono text-xs text-foreground/50 hover:text-foreground transition-colors"
+          >
+            <Phone className="h-3.5 w-3.5" />
+            08-123 456 78
+          </a>
+
+          <a
+            href="#boka"
             className="hidden sm:inline-flex items-center bg-primary text-primary-foreground font-heading font-600 text-sm px-6 py-2.5 rounded-full transition-all hover:shadow-[0_4px_16px_oklch(0.72_0.12_75/25%)] hover:-translate-y-px active:scale-[0.97] active:shadow-none"
           >
-            Boka tid
-          </Link>
+            Boka service
+          </a>
+
+          {/* Mobile: phone icon */}
+          <a
+            href="tel:0812345678"
+            className="sm:hidden inline-flex items-center justify-center w-9 h-9 rounded-full text-foreground/50 hover:text-foreground transition-colors"
+          >
+            <Phone className="h-4 w-4" />
+          </a>
 
           {/* Mobile Menu */}
           <Sheet open={open} onOpenChange={setOpen}>
@@ -71,13 +88,13 @@ export function Header() {
                     {link.label}
                   </Link>
                 ))}
-                <Link
-                  href="/kontakt"
+                <a
+                  href="#boka"
                   onClick={() => setOpen(false)}
                   className="mt-4 inline-flex items-center justify-center bg-primary text-primary-foreground font-heading font-600 text-sm px-6 py-2.5 rounded-full transition-all hover:shadow-[0_4px_16px_oklch(0.72_0.12_75/25%)]"
                 >
-                  Boka tid
-                </Link>
+                  Boka service
+                </a>
               </nav>
             </SheetContent>
           </Sheet>

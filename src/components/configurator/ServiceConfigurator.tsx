@@ -116,6 +116,7 @@ export function ServiceConfigurator() {
 
   return (
     <section
+      id="boka"
       className="relative py-20 sm:py-28 px-4 sm:px-6"
       style={{ backgroundColor: "oklch(0.12 0.005 260)" }}
     >

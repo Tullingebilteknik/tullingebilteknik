@@ -120,6 +120,19 @@ export function Testimonials() {
                 />
               ))}
             </div>
+
+            {/* CTA */}
+            <div className="mt-12 flex flex-col items-center gap-3">
+              <a
+                href="#boka"
+                className="inline-flex items-center bg-primary text-primary-foreground font-heading font-600 text-base px-8 py-3.5 rounded-full shadow-[0_4px_24px_oklch(0.72_0.12_75/20%)] transition-all hover:shadow-[0_4px_16px_oklch(0.72_0.12_75/25%)] hover:-translate-y-px"
+              >
+                Boka service
+              </a>
+              <span className="text-xs text-muted-foreground">
+                Gör som hundratals nöjda bilägare
+              </span>
+            </div>
           </div>
         </ScrollReveal>
       </div>

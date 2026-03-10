@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { ScrollReveal } from "@/components/animation/ScrollReveal";
 
 export function CTABanner() {
@@ -29,12 +28,12 @@ export function CTABanner() {
           </p>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-5">
-            <Link
-              href="/kontakt"
+            <a
+              href="#boka"
               className="btn-hero inline-flex items-center bg-primary text-primary-foreground font-heading font-600 text-base px-8 py-3.5 rounded-full shadow-[0_4px_24px_oklch(0.72_0.12_75/20%)]"
             >
-              Boka tid nu
-            </Link>
+              Boka service
+            </a>
             <a
               href="tel:0812345678"
               className="text-sm text-white/40 hover:text-white transition-colors"
