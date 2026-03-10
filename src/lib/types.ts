@@ -57,10 +57,11 @@ export interface Booking {
   start_time: string;
   end_time: string;
   notes: string | null;
+  order_number: number;
   created_at: string;
 }
 
 export interface BookingWithDetails extends Booking {
-  lead: Pick<Lead, "id" | "name" | "phone" | "reg_number" | "car_model" | "selected_services" | "service_interest">;
+  lead: Pick<Lead, "id" | "name" | "email" | "phone" | "reg_number" | "car_model" | "selected_services" | "service_interest" | "status">;
   mechanic: Pick<Mechanic, "id" | "name">;
 }

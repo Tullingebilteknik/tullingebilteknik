@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { createClient } from "@/lib/supabase/client";
 import type { Lead, Mechanic, BookingWithDetails } from "@/lib/types";
 import {
@@ -16,14 +16,30 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { Phone, Mail, Car } from "lucide-react";
+import flatpickr from "flatpickr";
+import { Swedish } from "flatpickr/dist/l10n/sv";
 
 const TIME_SLOTS = Array.from({ length: 21 }, (_, i) => {
   const hour = 7 + Math.floor(i / 2);
   const min = i % 2 === 0 ? "00" : "30";
   return `${String(hour).padStart(2, "0")}:${min}`;
 });
+
+const statusLabels: Record<string, string> = {
+  booked: "Bokad",
+  in_progress: "Pågående",
+  completed: "Färdigställd",
+};
+
+const statusColors: Record<string, string> = {
+  booked: "bg-blue-100 text-blue-800",
+  in_progress: "bg-purple-100 text-purple-800",
+  completed: "bg-green-100 text-green-800",
+};
 
 interface BookingDialogProps {
   open: boolean;
@@ -51,11 +67,14 @@ export function BookingDialog({
   const [startTime, setStartTime] = useState("08:00");
   const [endTime, setEndTime] = useState("09:00");
   const [notes, setNotes] = useState("");
+  const [status, setStatus] = useState("booked");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [leads, setLeads] = useState<Lead[]>([]);
   const [selectedLeadId, setSelectedLeadId] = useState("");
 
+  const dateRef = useRef<HTMLInputElement>(null);
+  const fpRef = useRef<flatpickr.Instance | null>(null);
   const supabase = createClient();
 
   useEffect(() => {
@@ -67,6 +86,7 @@ export function BookingDialog({
       setStartTime(booking.start_time.slice(0, 5));
       setEndTime(booking.end_time.slice(0, 5));
       setNotes(booking.notes || "");
+      setStatus(booking.lead.status || "booked");
       setSelectedLeadId(booking.lead_id);
     } else {
       setMechanicId(mechanics.length === 1 ? mechanics[0].id : "");
@@ -74,6 +94,7 @@ export function BookingDialog({
       setStartTime(defaultTime || "08:00");
       setEndTime(defaultTime ? nextSlot(defaultTime) : "09:00");
       setNotes("");
+      setStatus("booked");
       setSelectedLeadId(lead?.id || "");
     }
 
@@ -81,6 +102,32 @@ export function BookingDialog({
       loadUnbookedLeads();
     }
   }, [open, booking, lead, mechanics, defaultDate, defaultTime]);
+
+  // Init Flatpickr after dialog opens and date state is set
+  useEffect(() => {
+    if (!open || !dateRef.current) return;
+
+    // Small delay to ensure DOM is ready
+    const timer = setTimeout(() => {
+      if (!dateRef.current) return;
+      fpRef.current = flatpickr(dateRef.current, {
+        defaultDate: date || undefined,
+        dateFormat: "Y-m-d",
+        locale: Swedish,
+        disableMobile: true,
+        static: true,
+        onChange: (_dates, dateStr) => {
+          setDate(dateStr);
+        },
+      });
+    }, 50);
+
+    return () => {
+      clearTimeout(timer);
+      fpRef.current?.destroy();
+      fpRef.current = null;
+    };
+  }, [open, date]);
 
   async function loadUnbookedLeads() {
     const { data } = await supabase
@@ -98,16 +145,16 @@ export function BookingDialog({
       : "09:00";
   }
 
-  const activeLead = lead || leads.find((l) => l.id === selectedLeadId);
+  const activeLead = lead || (booking ? booking.lead as Lead : null) || leads.find((l) => l.id === selectedLeadId) || null;
   const canSave =
-    (lead?.id || selectedLeadId) && mechanicId && date && startTime && endTime && startTime < endTime;
+    (lead?.id || selectedLeadId || booking?.lead_id) && mechanicId && date && startTime && endTime && startTime < endTime;
 
   async function handleSave() {
     if (!canSave) return;
     setSaving(true);
     setError("");
 
-    const leadId = lead?.id || selectedLeadId;
+    const leadId = lead?.id || booking?.lead_id || selectedLeadId;
 
     if (booking) {
       const { error: updateError } = await supabase
@@ -126,6 +173,14 @@ export function BookingDialog({
         setError("Kunde inte uppdatera bokningen.");
         setSaving(false);
         return;
+      }
+
+      // Update lead status if changed
+      if (status !== booking.lead.status) {
+        await supabase
+          .from("leads")
+          .update({ status })
+          .eq("id", booking.lead_id);
       }
     } else {
       const { error: insertError } = await supabase.from("bookings").insert({
@@ -170,45 +225,75 @@ export function BookingDialog({
     onOpenChange(false);
   }
 
+  const orderNum = booking?.order_number
+    ? `#${String(booking.order_number).padStart(4, "0")}`
+    : null;
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>
-            {booking ? "Redigera bokning" : "Ny bokning"}
+          <DialogTitle className="flex items-center gap-2">
+            {booking ? (
+              <>
+                Ärende {orderNum}
+                <Badge className={`${statusColors[status]} border-0 text-xs`}>
+                  {statusLabels[status]}
+                </Badge>
+              </>
+            ) : (
+              "Ny bokning"
+            )}
           </DialogTitle>
         </DialogHeader>
 
         <div className="space-y-4">
-          {/* Lead */}
-          {lead ? (
-            <div className="rounded-lg bg-slate-50 p-3">
-              <p className="font-medium text-sm">{lead.name}</p>
-              <p className="text-xs text-slate-500">
-                {lead.reg_number && (
-                  <span className="font-mono mr-2">{lead.reg_number}</span>
+          {/* Customer info — shown for lead prop or editing booking */}
+          {(lead || booking) && activeLead ? (
+            <div className="rounded-lg bg-slate-50 p-4 space-y-2">
+              <p className="font-semibold text-sm">{activeLead.name}</p>
+              <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-slate-600">
+                {activeLead.phone && (
+                  <a href={`tel:${activeLead.phone}`} className="inline-flex items-center gap-1 hover:text-slate-900">
+                    <Phone className="h-3 w-3" /> {activeLead.phone}
+                  </a>
                 )}
-                {lead.selected_services?.join(", ") || lead.service_interest || ""}
-              </p>
-            </div>
-          ) : booking ? (
-            <div className="rounded-lg bg-slate-50 p-3">
-              <p className="font-medium text-sm">{booking.lead.name}</p>
-              <p className="text-xs text-slate-500">
-                {booking.lead.reg_number && (
-                  <span className="font-mono mr-2">{booking.lead.reg_number}</span>
+                {activeLead.email && (
+                  <a href={`mailto:${activeLead.email}`} className="inline-flex items-center gap-1 hover:text-slate-900">
+                    <Mail className="h-3 w-3" /> {activeLead.email}
+                  </a>
                 )}
-                {booking.lead.selected_services?.join(", ") || booking.lead.service_interest || ""}
-              </p>
+              </div>
+              {(activeLead.reg_number || activeLead.car_model) && (
+                <div className="flex items-center gap-2 text-xs text-slate-600">
+                  <Car className="h-3 w-3" />
+                  {activeLead.reg_number && (
+                    <span className="font-mono font-semibold text-slate-800">{activeLead.reg_number}</span>
+                  )}
+                  {activeLead.car_model && (
+                    <span>{activeLead.car_model}</span>
+                  )}
+                </div>
+              )}
+              {(activeLead.selected_services?.length || activeLead.service_interest) && (
+                <div className="flex flex-wrap gap-1 pt-1">
+                  {activeLead.selected_services?.map((s) => (
+                    <Badge key={s} variant="secondary" className="text-[10px]">{s}</Badge>
+                  )) || (
+                    <Badge variant="secondary" className="text-[10px]">{activeLead.service_interest}</Badge>
+                  )}
+                </div>
+              )}
             </div>
           ) : (
+            /* Lead selector — only when creating from schema (no lead/booking) */
             <div>
               <label className="text-sm font-medium text-slate-700 mb-1 block">
-                Lead
+                Kund
               </label>
               <Select value={selectedLeadId} onValueChange={setSelectedLeadId}>
                 <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Välj lead..." />
+                  <SelectValue placeholder="Välj kund..." />
                 </SelectTrigger>
                 <SelectContent>
                   {leads.map((l) => (
@@ -216,6 +301,34 @@ export function BookingDialog({
                       {l.name} {l.reg_number ? `(${l.reg_number})` : ""}
                     </SelectItem>
                   ))}
+                </SelectContent>
+              </Select>
+              {/* Show selected lead info */}
+              {activeLead && (
+                <div className="rounded-lg bg-slate-50 p-3 mt-2 text-xs text-slate-500 space-y-1">
+                  {activeLead.phone && <p>Tel: {activeLead.phone}</p>}
+                  {activeLead.email && <p>E-post: {activeLead.email}</p>}
+                  {activeLead.car_model && <p>Bil: {activeLead.car_model}</p>}
+                  {activeLead.reg_number && <p>Reg.nr: {activeLead.reg_number}</p>}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Status — only when editing */}
+          {booking && (
+            <div>
+              <label className="text-sm font-medium text-slate-700 mb-1 block">
+                Status
+              </label>
+              <Select value={status} onValueChange={setStatus}>
+                <SelectTrigger className="w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="booked">Bokad</SelectItem>
+                  <SelectItem value="in_progress">Pågående</SelectItem>
+                  <SelectItem value="completed">Färdigställd</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -240,16 +353,18 @@ export function BookingDialog({
             </Select>
           </div>
 
-          {/* Date */}
+          {/* Date — Flatpickr */}
           <div>
             <label className="text-sm font-medium text-slate-700 mb-1 block">
               Datum
             </label>
             <input
-              type="date"
+              ref={dateRef}
+              type="text"
+              readOnly
               value={date}
-              onChange={(e) => setDate(e.target.value)}
-              className="w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-xs focus-visible:outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
+              placeholder="Välj datum"
+              className="w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-xs cursor-pointer focus-visible:outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
             />
           </div>
 
@@ -303,14 +418,6 @@ export function BookingDialog({
               rows={2}
             />
           </div>
-
-          {/* Selected lead info */}
-          {activeLead && !lead && !booking && (
-            <div className="rounded-lg bg-slate-50 p-3 text-xs text-slate-500">
-              {activeLead.phone && <p>Tel: {activeLead.phone}</p>}
-              {activeLead.car_model && <p>Bil: {activeLead.car_model}</p>}
-            </div>
-          )}
 
           {error && <p className="text-sm text-red-600">{error}</p>}
 

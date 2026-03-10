@@ -16,26 +16,38 @@ interface BookingCardProps {
 }
 
 export function BookingCard({ booking, onClick, style }: BookingCardProps) {
-  const leadStatus = (booking.lead as { status?: string })?.status || "booked";
+  const leadStatus = booking.lead.status || "booked";
   const colorClass = statusColors[leadStatus] || statusColors.booked;
+  const orderNum = booking.order_number
+    ? `#${String(booking.order_number).padStart(4, "0")}`
+    : "";
+  const service = booking.lead.selected_services?.[0] || booking.lead.service_interest || "";
 
   return (
     <button
-      onClick={onClick}
+      onClick={(e) => { e.stopPropagation(); onClick(); }}
       style={style}
       className={`absolute left-0.5 right-0.5 rounded border px-2 py-1 text-left cursor-pointer transition-opacity hover:opacity-90 overflow-hidden ${colorClass}`}
     >
-      <p className="text-xs font-semibold truncate leading-tight">
-        {booking.lead.name}
-      </p>
+      <div className="flex items-center gap-1">
+        {orderNum && (
+          <span className="text-[9px] font-mono opacity-50">{orderNum}</span>
+        )}
+        <p className="text-xs font-semibold truncate leading-tight flex-1">
+          {booking.lead.name}
+        </p>
+      </div>
       {booking.lead.reg_number && (
         <p className="text-[10px] font-mono opacity-70 truncate leading-tight">
           {booking.lead.reg_number}
+          {booking.lead.car_model ? ` · ${booking.lead.car_model}` : ""}
         </p>
       )}
-      <p className="text-[10px] opacity-60 truncate leading-tight">
-        {booking.start_time.slice(0, 5)}–{booking.end_time.slice(0, 5)}
-      </p>
+      {service && (
+        <p className="text-[10px] opacity-60 truncate leading-tight">
+          {service}
+        </p>
+      )}
     </button>
   );
 }

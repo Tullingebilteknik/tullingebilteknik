@@ -58,7 +58,7 @@ export default function AdminSchemaPage() {
       supabase
         .from("bookings")
         .select(
-          "*, lead:leads(id, name, phone, reg_number, car_model, selected_services, service_interest, status), mechanic:mechanics(id, name)"
+          "*, lead:leads(id, name, email, phone, reg_number, car_model, selected_services, service_interest, status), mechanic:mechanics(id, name)"
         )
         .gte("scheduled_date", formatDateISO(weekStart))
         .lte("scheduled_date", formatDateISO(weekEnd)),
