@@ -75,6 +75,7 @@ export function BookingDialog({
 
   const dateRef = useRef<HTMLInputElement>(null);
   const fpRef = useRef<flatpickr.Instance | null>(null);
+  const initialDateRef = useRef("");
   const supabase = createClient();
 
   useEffect(() => {
@@ -83,14 +84,17 @@ export function BookingDialog({
     if (booking) {
       setMechanicId(booking.mechanic_id);
       setDate(booking.scheduled_date);
+      initialDateRef.current = booking.scheduled_date;
       setStartTime(booking.start_time.slice(0, 5));
       setEndTime(booking.end_time.slice(0, 5));
       setNotes(booking.notes || "");
       setStatus(booking.lead.status || "booked");
       setSelectedLeadId(booking.lead_id);
     } else {
+      const d = defaultDate || new Date().toISOString().split("T")[0];
       setMechanicId(mechanics.length === 1 ? mechanics[0].id : "");
-      setDate(defaultDate || new Date().toISOString().split("T")[0]);
+      setDate(d);
+      initialDateRef.current = d;
       setStartTime(defaultTime || "08:00");
       setEndTime(defaultTime ? nextSlot(defaultTime) : "09:00");
       setNotes("");
@@ -103,7 +107,7 @@ export function BookingDialog({
     }
   }, [open, booking, lead, mechanics, defaultDate, defaultTime]);
 
-  // Init Flatpickr after dialog opens and date state is set
+  // Init Flatpickr after dialog opens (no `date` in deps to avoid loop)
   useEffect(() => {
     if (!open || !dateRef.current) return;
 
@@ -111,7 +115,7 @@ export function BookingDialog({
     const timer = setTimeout(() => {
       if (!dateRef.current) return;
       fpRef.current = flatpickr(dateRef.current, {
-        defaultDate: date || undefined,
+        defaultDate: initialDateRef.current || undefined,
         dateFormat: "Y-m-d",
         locale: Swedish,
         disableMobile: true,
@@ -127,7 +131,7 @@ export function BookingDialog({
       fpRef.current?.destroy();
       fpRef.current = null;
     };
-  }, [open, date]);
+  }, [open]);
 
   async function loadUnbookedLeads() {
     const { data } = await supabase
