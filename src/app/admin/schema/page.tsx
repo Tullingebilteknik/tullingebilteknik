@@ -43,6 +43,7 @@ export default function AdminSchemaPage() {
   const [defaultDate, setDefaultDate] = useState("");
   const [defaultTime, setDefaultTime] = useState("");
   const [defaultMechanicId, setDefaultMechanicId] = useState("");
+  const [loading, setLoading] = useState(true);
 
   const supabase = createClient();
 
@@ -66,6 +67,7 @@ export default function AdminSchemaPage() {
 
     if (mechs) setMechanics(mechs);
     if (bks) setBookings(bks as BookingWithDetails[]);
+    setLoading(false);
   }, [weekStart]);
 
   useEffect(() => {
@@ -144,7 +146,11 @@ export default function AdminSchemaPage() {
       </div>
 
       {/* Schedule */}
-      {mechanics.length === 0 ? (
+      {loading ? (
+        <div className="rounded-xl border bg-white p-12 text-center text-slate-400">
+          <p>Laddar schema...</p>
+        </div>
+      ) : mechanics.length === 0 ? (
         <div className="rounded-xl border bg-white p-12 text-center text-slate-500">
           <p>Inga mekaniker hittades.</p>
           <p className="text-sm mt-1">
