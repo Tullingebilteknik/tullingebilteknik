@@ -27,7 +27,7 @@ export function BookingCard({ booking, onClick, style }: BookingCardProps) {
     <button
       onClick={(e) => { e.stopPropagation(); onClick(); }}
       style={style}
-      className={`absolute left-0.5 right-0.5 rounded border px-2 py-1 text-left cursor-pointer transition-opacity hover:opacity-90 overflow-hidden ${colorClass}`}
+      className={`absolute left-0.5 right-0.5 z-10 rounded border px-2 py-1 text-left cursor-pointer transition-opacity hover:opacity-90 overflow-hidden ${colorClass}`}
     >
       <div className="flex items-center gap-1">
         {orderNum && (
