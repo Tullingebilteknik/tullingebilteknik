@@ -142,7 +142,11 @@ export function WeekSchedule({
                         isToday ? "bg-amber-50/30" : ""
                       }`}
                       style={{ height: `${ROW_HEIGHT}px` }}
-                      onClick={() => onSlotClick(dateStr, timeStr, m.id)}
+                      onClick={(e) => {
+                        if (e.target === e.currentTarget) {
+                          onSlotClick(dateStr, timeStr, m.id);
+                        }
+                      }}
                     >
                       {/* Render bookings only on the first hour row */}
                       {hour === START_HOUR &&
