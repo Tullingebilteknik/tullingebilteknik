@@ -293,10 +293,11 @@ export default function AdminLeadsPage() {
                           value={lead.status}
                           onValueChange={(val) => updateStatus(lead.id, val)}
                         >
-                          <SelectTrigger className="w-32 h-8" onClick={(e) => e.stopPropagation()}>
-                            <Badge className={`${statusColors[lead.status]} border-0`}>
-                              {statusLabels[lead.status]}
-                            </Badge>
+                          <SelectTrigger
+                            className={`w-32 h-8 ${statusColors[lead.status]} border-0 font-medium text-xs`}
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
                             <SelectItem value="new">Ny</SelectItem>
