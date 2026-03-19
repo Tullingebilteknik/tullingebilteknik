@@ -2,7 +2,7 @@
 
 import dynamic from "next/dynamic";
 import Link from "next/link";
-import { useState, Suspense } from "react";
+import { useState, useRef, useEffect, Suspense } from "react";
 import {
   Settings,
   ShieldCheck,
@@ -42,22 +42,37 @@ interface ServiceGridProps {
 
 export function ServiceGrid({ services }: ServiceGridProps) {
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
+  const [canvasVisible, setCanvasVisible] = useState(false);
+  const sectionRef = useRef<HTMLElement>(null);
   const activeService = hoveredIndex !== null ? services[hoveredIndex] : null;
+
+  useEffect(() => {
+    const el = sectionRef.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => { if (entry.isIntersecting) { setCanvasVisible(true); observer.disconnect(); } },
+      { rootMargin: "200px" }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
 
   return (
     <>
       {/* Dark-to-light transition */}
       <div className="h-32 bg-gradient-to-b from-[oklch(0.12_0.005_260)] via-[oklch(0.55_0.003_260)] to-white" />
 
-      <section id="tjanster" className="py-12 sm:py-20 bg-white tech-surface relative overflow-hidden">
-        {/* Full-section 3D Volvo background — desktop only */}
-        <div className="hidden lg:block absolute inset-0 z-0 pointer-events-none">
-          <Suspense fallback={null}>
-            <VolvoDiagnosisScene
-              activeSlug={activeService?.slug ?? null}
-            />
-          </Suspense>
-        </div>
+      <section ref={sectionRef} id="tjanster" className="py-12 sm:py-20 bg-white tech-surface relative overflow-hidden">
+        {/* Full-section 3D Volvo background — desktop only, lazy-loaded */}
+        {canvasVisible && (
+          <div className="hidden lg:block absolute inset-0 z-0 pointer-events-none">
+            <Suspense fallback={null}>
+              <VolvoDiagnosisScene
+                activeSlug={activeService?.slug ?? null}
+              />
+            </Suspense>
+          </div>
+        )}
 
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 relative z-10">
           <ScrollReveal>

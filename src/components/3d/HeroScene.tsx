@@ -6,6 +6,8 @@ import { Environment, Float, useGLTF } from "@react-three/drei";
 import type { Group } from "three";
 import * as THREE from "three";
 
+const DRACO_PATH = "/draco/gltf/";
+
 const gunmetalMaterial = new THREE.MeshPhysicalMaterial({
   color: new THREE.Color("#4a4a50"),
   metalness: 1,
@@ -19,7 +21,7 @@ function ChromeWheel() {
   const groupRef = useRef<Group>(null);
   const mouse = useRef({ x: 0, y: 0 });
   const { viewport } = useThree();
-  const { scene } = useGLTF("/models/wheel.glb");
+  const { scene } = useGLTF("/models/wheel.glb", DRACO_PATH);
 
   useEffect(() => {
     scene.traverse((child) => {
@@ -51,7 +53,7 @@ function ChromeWheel() {
   );
 }
 
-useGLTF.preload("/models/wheel.glb");
+useGLTF.preload("/models/wheel.glb", DRACO_PATH);
 
 export default function HeroScene() {
   return (
