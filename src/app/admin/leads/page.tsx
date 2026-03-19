@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { createClient } from "@/lib/supabase/client";
 import type { Lead, Mechanic } from "@/lib/types";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
@@ -28,13 +29,21 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { BookingDialog } from "@/components/admin/BookingDialog";
-import { Phone, Mail, MessageSquare, Filter, AlertCircle, CalendarPlus } from "lucide-react";
+import { Phone, Mail, MessageSquare, AlertCircle, CalendarPlus, Search } from "lucide-react";
+
+const statusConfig = [
+  { value: "all", label: "Alla" },
+  { value: "new", label: "Nya", color: "bg-amber-100 text-amber-800" },
+  { value: "booked", label: "Bokade", color: "bg-blue-100 text-blue-800" },
+  { value: "in_progress", label: "Pågående", color: "bg-purple-100 text-purple-800" },
+  { value: "completed", label: "Klara", color: "bg-green-100 text-green-800" },
+] as const;
 
 const statusLabels: Record<string, string> = {
   new: "Ny",
   booked: "Bokad",
   in_progress: "Pågående",
-  completed: "Färdigställd",
+  completed: "Klar",
 };
 
 const statusColors: Record<string, string> = {
@@ -44,9 +53,25 @@ const statusColors: Record<string, string> = {
   completed: "bg-green-100 text-green-800",
 };
 
+const monthNames = [
+  "Januari", "Februari", "Mars", "April", "Maj", "Juni",
+  "Juli", "Augusti", "September", "Oktober", "November", "December",
+];
+
+function getMonthKey(dateStr: string) {
+  const d = new Date(dateStr);
+  return `${d.getFullYear()}-${String(d.getMonth()).padStart(2, "0")}`;
+}
+
+function getMonthLabel(key: string) {
+  const [year, month] = key.split("-");
+  return `${monthNames[parseInt(month)]} ${year}`;
+}
+
 export default function AdminLeadsPage() {
   const [leads, setLeads] = useState<Lead[]>([]);
-  const [filter, setFilter] = useState<string>("all");
+  const [filter, setFilter] = useState("all");
+  const [search, setSearch] = useState("");
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
   const [notes, setNotes] = useState("");
   const [bookingLead, setBookingLead] = useState<Lead | null>(null);
@@ -77,7 +102,11 @@ export default function AdminLeadsPage() {
   }
 
   async function updateStatus(id: string, status: string) {
-    await supabase.from("leads").update({ status }).eq("id", id);
+    const { error } = await supabase.from("leads").update({ status }).eq("id", id);
+    if (error) {
+      console.error("Failed to update status:", error);
+      return;
+    }
     setLeads((prev) => prev.map((l) => (l.id === id ? { ...l, status: status as Lead["status"] } : l)));
     if (selectedLead?.id === id) {
       setSelectedLead((prev) => (prev ? { ...prev, status: status as Lead["status"] } : null));
@@ -92,155 +121,231 @@ export default function AdminLeadsPage() {
     );
   }
 
-  const filteredLeads = filter === "all" ? leads : leads.filter((l) => l.status === filter);
+  // Filter + search
+  const filteredLeads = useMemo(() => {
+    let result = leads;
+
+    if (filter !== "all") {
+      result = result.filter((l) => l.status === filter);
+    }
+
+    if (search.trim()) {
+      const q = search.toLowerCase();
+      result = result.filter((l) =>
+        l.name.toLowerCase().includes(q) ||
+        l.phone?.toLowerCase().includes(q) ||
+        l.email?.toLowerCase().includes(q) ||
+        l.reg_number?.toLowerCase().includes(q) ||
+        l.car_model?.toLowerCase().includes(q) ||
+        l.selected_services?.some((s) => s.toLowerCase().includes(q)) ||
+        l.service_interest?.toLowerCase().includes(q)
+      );
+    }
+
+    return result;
+  }, [leads, filter, search]);
+
+  // Group by month
+  const groupedLeads = useMemo(() => {
+    const groups: { key: string; label: string; leads: Lead[] }[] = [];
+    const map = new Map<string, Lead[]>();
+
+    for (const lead of filteredLeads) {
+      const key = getMonthKey(lead.created_at);
+      if (!map.has(key)) map.set(key, []);
+      map.get(key)!.push(lead);
+    }
+
+    for (const [key, groupLeads] of map) {
+      groups.push({ key, label: getMonthLabel(key), leads: groupLeads });
+    }
+
+    return groups;
+  }, [filteredLeads]);
+
+  // Status counts
+  const statusCounts = useMemo(() => {
+    const counts: Record<string, number> = { all: leads.length };
+    for (const l of leads) {
+      counts[l.status] = (counts[l.status] || 0) + 1;
+    }
+    return counts;
+  }, [leads]);
 
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold text-slate-900">Leads</h1>
-        <div className="flex items-center gap-2">
-          <Filter className="h-4 w-4 text-slate-500" />
-          <Select value={filter} onValueChange={setFilter}>
-            <SelectTrigger className="w-40">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Alla</SelectItem>
-              <SelectItem value="new">Nya</SelectItem>
-              <SelectItem value="booked">Bokade</SelectItem>
-              <SelectItem value="in_progress">Pågående</SelectItem>
-              <SelectItem value="completed">Färdigställda</SelectItem>
-            </SelectContent>
-          </Select>
+      </div>
+
+      {/* Status tabs + Search */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 mb-6">
+        <div className="flex flex-wrap gap-1.5">
+          {statusConfig.map((s) => (
+            <button
+              key={s.value}
+              onClick={() => setFilter(s.value)}
+              className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
+                filter === s.value
+                  ? "bg-slate-900 text-white"
+                  : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+              }`}
+            >
+              {s.label}
+              {(statusCounts[s.value] ?? 0) > 0 && (
+                <span className={`ml-1.5 ${filter === s.value ? "text-white/60" : "text-slate-400"}`}>
+                  {statusCounts[s.value]}
+                </span>
+              )}
+            </button>
+          ))}
+        </div>
+
+        <div className="relative sm:ml-auto w-full sm:w-64">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+          <Input
+            placeholder="Sök namn, telefon, reg..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="pl-9 h-9"
+          />
         </div>
       </div>
 
-      <div className="rounded-xl border bg-white">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Namn</TableHead>
-              <TableHead>Fordon</TableHead>
-              <TableHead>Kontakt</TableHead>
-              <TableHead>Tjänst</TableHead>
-              <TableHead>Tid</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Datum</TableHead>
-              <TableHead className="w-24"></TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {filteredLeads.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={8} className="text-center py-8 text-slate-500">
-                  Inga leads att visa.
-                </TableCell>
-              </TableRow>
-            ) : (
-              filteredLeads.map((lead) => (
-                <TableRow
-                  key={lead.id}
-                  className="cursor-pointer hover:bg-slate-50"
-                  onClick={() => {
-                    setSelectedLead(lead);
-                    setNotes(lead.notes || "");
-                  }}
-                >
-                  <TableCell className={`font-medium ${lead.preferred_time === "Snarast" ? "font-bold" : ""}`}>
-                    {lead.name}
-                  </TableCell>
-                  <TableCell className="text-sm text-slate-500">
-                    {lead.reg_number || lead.car_model ? (
-                      <div>
-                        {lead.reg_number && <span className="font-mono font-medium text-slate-700">{lead.reg_number}</span>}
-                        {lead.car_model && <p className="text-xs">{lead.car_model}</p>}
-                      </div>
-                    ) : "—"}
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex flex-col gap-1 text-sm">
-                      {lead.phone && (
-                        <a href={`tel:${lead.phone}`} className="flex items-center gap-1 text-slate-600 hover:text-slate-900" onClick={(e) => e.stopPropagation()}>
-                          <Phone className="h-3 w-3" /> {lead.phone}
-                        </a>
-                      )}
-                      {lead.email && (
-                        <a href={`mailto:${lead.email}`} className="flex items-center gap-1 text-slate-600 hover:text-slate-900" onClick={(e) => e.stopPropagation()}>
-                          <Mail className="h-3 w-3" /> {lead.email}
-                        </a>
-                      )}
-                    </div>
-                  </TableCell>
-                  <TableCell className="text-sm text-slate-500">
-                    {lead.selected_services?.length
-                      ? lead.selected_services.join(", ")
-                      : lead.service_interest || "—"}
-                  </TableCell>
-                  <TableCell className="text-sm">
-                    {lead.preferred_time === "Snarast" ? (
-                      <span className="inline-flex items-center gap-1 text-red-600 font-semibold">
-                        <AlertCircle className="h-3.5 w-3.5" /> Snarast
-                      </span>
-                    ) : lead.preferred_time ? (
-                      <span className="text-slate-500">{lead.preferred_time}</span>
-                    ) : "—"}
-                  </TableCell>
-                  <TableCell>
-                    <Select
-                      value={lead.status}
-                      onValueChange={(val) => updateStatus(lead.id, val)}
+      {/* Grouped leads */}
+      {groupedLeads.length === 0 ? (
+        <div className="rounded-xl border bg-white p-12 text-center text-slate-500">
+          Inga leads att visa.
+        </div>
+      ) : (
+        groupedLeads.map((group) => (
+          <div key={group.key} className="mb-8">
+            <h2 className="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-3">
+              {group.label}
+              <span className="ml-2 text-slate-400 font-normal">({group.leads.length})</span>
+            </h2>
+
+            <div className="rounded-xl border bg-white overflow-hidden">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Namn</TableHead>
+                    <TableHead>Fordon</TableHead>
+                    <TableHead>Kontakt</TableHead>
+                    <TableHead>Tjänst</TableHead>
+                    <TableHead>Tid</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Datum</TableHead>
+                    <TableHead className="w-24"></TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {group.leads.map((lead) => (
+                    <TableRow
+                      key={lead.id}
+                      className="cursor-pointer hover:bg-slate-50"
+                      onClick={() => {
+                        setSelectedLead(lead);
+                        setNotes(lead.notes || "");
+                      }}
                     >
-                      <SelectTrigger className="w-36 h-8" onClick={(e) => e.stopPropagation()}>
-                        <Badge className={`${statusColors[lead.status]} border-0`}>
-                          {statusLabels[lead.status]}
-                        </Badge>
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="new">Ny</SelectItem>
-                        <SelectItem value="booked">Bokad</SelectItem>
-                        <SelectItem value="in_progress">Pågående</SelectItem>
-                        <SelectItem value="completed">Färdigställd</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </TableCell>
-                  <TableCell className="text-sm text-slate-500">
-                    {new Date(lead.created_at).toLocaleDateString("sv-SE")}
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex gap-1">
-                      {lead.status === "new" && (
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="text-amber-600 hover:text-amber-700 hover:bg-amber-50"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setBookingLead(lead);
-                          }}
-                          title="Boka in"
+                      <TableCell className={`font-medium ${lead.preferred_time === "Snarast" ? "font-bold" : ""}`}>
+                        {lead.name}
+                      </TableCell>
+                      <TableCell className="text-sm text-slate-500">
+                        {lead.reg_number || lead.car_model ? (
+                          <div>
+                            {lead.reg_number && <span className="font-mono font-medium text-slate-700">{lead.reg_number}</span>}
+                            {lead.car_model && <p className="text-xs">{lead.car_model}</p>}
+                          </div>
+                        ) : "—"}
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex flex-col gap-1 text-sm">
+                          {lead.phone && (
+                            <a href={`tel:${lead.phone}`} className="flex items-center gap-1 text-slate-600 hover:text-slate-900" onClick={(e) => e.stopPropagation()}>
+                              <Phone className="h-3 w-3" /> {lead.phone}
+                            </a>
+                          )}
+                          {lead.email && (
+                            <a href={`mailto:${lead.email}`} className="flex items-center gap-1 text-slate-600 hover:text-slate-900" onClick={(e) => e.stopPropagation()}>
+                              <Mail className="h-3 w-3" /> {lead.email}
+                            </a>
+                          )}
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-sm text-slate-500">
+                        {lead.selected_services?.length
+                          ? lead.selected_services.join(", ")
+                          : lead.service_interest || "—"}
+                      </TableCell>
+                      <TableCell className="text-sm">
+                        {lead.preferred_time === "Snarast" ? (
+                          <span className="inline-flex items-center gap-1 text-red-600 font-semibold">
+                            <AlertCircle className="h-3.5 w-3.5" /> Snarast
+                          </span>
+                        ) : lead.preferred_time ? (
+                          <span className="text-slate-500">{lead.preferred_time}</span>
+                        ) : "—"}
+                      </TableCell>
+                      <TableCell>
+                        <Select
+                          value={lead.status}
+                          onValueChange={(val) => updateStatus(lead.id, val)}
                         >
-                          <CalendarPlus className="h-4 w-4" />
-                        </Button>
-                      )}
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setSelectedLead(lead);
-                          setNotes(lead.notes || "");
-                        }}
-                      >
-                        <MessageSquare className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
-      </div>
+                          <SelectTrigger className="w-32 h-8" onClick={(e) => e.stopPropagation()}>
+                            <Badge className={`${statusColors[lead.status]} border-0`}>
+                              {statusLabels[lead.status]}
+                            </Badge>
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="new">Ny</SelectItem>
+                            <SelectItem value="booked">Bokad</SelectItem>
+                            <SelectItem value="in_progress">Pågående</SelectItem>
+                            <SelectItem value="completed">Klar</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </TableCell>
+                      <TableCell className="text-sm text-slate-500">
+                        {new Date(lead.created_at).toLocaleDateString("sv-SE")}
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex gap-1">
+                          {lead.status === "new" && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="text-amber-600 hover:text-amber-700 hover:bg-amber-50"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setBookingLead(lead);
+                              }}
+                              title="Boka in"
+                            >
+                              <CalendarPlus className="h-4 w-4" />
+                            </Button>
+                          )}
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setSelectedLead(lead);
+                              setNotes(lead.notes || "");
+                            }}
+                          >
+                            <MessageSquare className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          </div>
+        ))
+      )}
 
       {/* Lead Detail Dialog */}
       <Dialog open={!!selectedLead} onOpenChange={(open) => !open && setSelectedLead(null)}>
