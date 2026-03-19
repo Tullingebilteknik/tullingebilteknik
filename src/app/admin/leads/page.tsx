@@ -1,6 +1,9 @@
 "use client";
 
-import { useEffect, useState, useMemo, useCallback, useRef } from "react";
+import React, { useState, useMemo, useCallback, useRef, useEffect } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useVirtualizer } from "@tanstack/react-virtual";
+import { motion, AnimatePresence } from "framer-motion";
 import { createClient } from "@/lib/supabase/client";
 import type { Lead, Mechanic, ContactAttempt } from "@/lib/types";
 import { Badge } from "@/components/ui/badge";
@@ -14,14 +17,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import {
   Dialog,
   DialogContent,
@@ -109,7 +104,11 @@ function timeAgo(dateStr: string): string {
   return `${days}d sedan`;
 }
 
-/* ── Contact attempt summary per lead ──────────── */
+/* ── Grid column template ──────────────────────── */
+
+const GRID_COLS = "1.4fr 0.8fr 1fr 1.2fr 0.7fr 0.8fr 0.7fr 60px";
+
+/* ── Contact attempt summary ───────────────────── */
 
 function ContactSummary({ attempts }: { attempts: ContactAttempt[] }) {
   if (attempts.length === 0) return <span className="text-slate-300">—</span>;
@@ -142,7 +141,6 @@ function useAutoSave(value: string, save: (val: string) => void, delay = 800) {
 
   useEffect(() => {
     initial.current = value;
-  // Reset initial when lead changes (value resets)
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -161,123 +159,404 @@ function useAutoSave(value: string, save: (val: string) => void, delay = 800) {
   return saved;
 }
 
+/* ── Virtual list item types ───────────────────── */
+
+type VirtualItem =
+  | { type: "header"; key: string; label: string; count: number }
+  | { type: "lead"; key: string; lead: Lead };
+
+/* ── LeadGridRow (memoized) ────────────────────── */
+
+const LeadGridRow = React.memo(function LeadGridRow({
+  lead,
+  attempts,
+  onOpen,
+  onUpdateStatus,
+  onBook,
+  shouldAnimate,
+  animationDelay,
+}: {
+  lead: Lead;
+  attempts: ContactAttempt[];
+  onOpen: (lead: Lead) => void;
+  onUpdateStatus: (id: string, status: string) => void;
+  onBook: (lead: Lead) => void;
+  shouldAnimate: boolean;
+  animationDelay: number;
+}) {
+  return (
+    <motion.div
+      initial={shouldAnimate ? { opacity: 0, y: 8 } : false}
+      animate={{ opacity: 1, y: 0 }}
+      transition={shouldAnimate ? { duration: 0.25, delay: animationDelay } : undefined}
+      className="grid items-center px-4 py-2.5 cursor-pointer hover:bg-slate-50/80 border-b border-slate-100/80 transition-colors"
+      style={{ gridTemplateColumns: GRID_COLS }}
+      onClick={() => onOpen(lead)}
+    >
+      {/* Namn */}
+      <div className="min-w-0">
+        <div className="flex items-center gap-1.5">
+          <span className="font-medium text-sm text-slate-900 truncate">{lead.name}</span>
+          {lead.deal_value != null && lead.deal_value > 0 && (
+            <span className="text-[11px] text-green-700 font-mono shrink-0">{lead.deal_value.toLocaleString("sv-SE")} kr</span>
+          )}
+        </div>
+        {lead.preferred_time === "Snarast" && (
+          <span className="inline-flex items-center gap-0.5 text-[11px] text-red-600 font-semibold">
+            <AlertCircle className="h-3 w-3" /> Snarast
+          </span>
+        )}
+      </div>
+
+      {/* Fordon */}
+      <div className="text-sm text-slate-500 min-w-0">
+        {lead.reg_number || lead.car_model ? (
+          <div>
+            {lead.reg_number && <span className="font-mono font-medium text-slate-700 text-xs">{lead.reg_number}</span>}
+            {lead.car_model && <p className="text-xs truncate">{lead.car_model}</p>}
+          </div>
+        ) : (
+          <span className="text-slate-300">—</span>
+        )}
+      </div>
+
+      {/* Kontakt */}
+      <div className="flex flex-col gap-0.5 min-w-0">
+        {lead.phone && (
+          <a href={`tel:${lead.phone}`} className="flex items-center gap-1 text-xs text-slate-600 hover:text-slate-900 truncate" onClick={(e) => e.stopPropagation()}>
+            <Phone className="h-3 w-3 shrink-0" /> {lead.phone}
+          </a>
+        )}
+        {lead.email && (
+          <a href={`mailto:${lead.email}`} className="flex items-center gap-1 text-xs text-slate-600 hover:text-slate-900 truncate" onClick={(e) => e.stopPropagation()}>
+            <Mail className="h-3 w-3 shrink-0" /> {lead.email}
+          </a>
+        )}
+      </div>
+
+      {/* Tjänst */}
+      <div className="text-xs text-slate-500 truncate min-w-0">
+        {lead.selected_services?.length
+          ? lead.selected_services.join(", ")
+          : lead.service_interest || "—"}
+      </div>
+
+      {/* Kontaktförsök */}
+      <div>
+        <ContactSummary attempts={attempts} />
+      </div>
+
+      {/* Status */}
+      <div onClick={(e) => e.stopPropagation()}>
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={lead.status}
+            initial={{ scale: 0.9, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            exit={{ scale: 0.9, opacity: 0 }}
+            transition={{ duration: 0.15 }}
+          >
+            <Select
+              value={lead.status}
+              onValueChange={(val) => onUpdateStatus(lead.id, val)}
+            >
+              <SelectTrigger
+                className={`w-full h-7 ${statusColors[lead.status]} border-0 font-medium text-[11px]`}
+              >
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="ska_kontaktas">Ska kontaktas</SelectItem>
+                <SelectItem value="bokad">Bokad</SelectItem>
+                <SelectItem value="ej_affar">Ej affär</SelectItem>
+                <SelectItem value="affar">Affär</SelectItem>
+              </SelectContent>
+            </Select>
+          </motion.div>
+        </AnimatePresence>
+      </div>
+
+      {/* Datum */}
+      <div className="text-xs text-slate-500">
+        {new Date(lead.created_at).toLocaleDateString("sv-SE")}
+      </div>
+
+      {/* Actions */}
+      <div className="flex gap-0.5 justify-end">
+        {lead.status === "ska_kontaktas" && (
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-7 w-7 text-amber-600 hover:text-amber-700 hover:bg-amber-50"
+            onClick={(e) => {
+              e.stopPropagation();
+              onBook(lead);
+            }}
+            title="Boka in"
+          >
+            <CalendarPlus className="h-3.5 w-3.5" />
+          </Button>
+        )}
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-7 w-7"
+          onClick={(e) => {
+            e.stopPropagation();
+            onOpen(lead);
+          }}
+        >
+          <MessageSquare className="h-3.5 w-3.5" />
+        </Button>
+      </div>
+    </motion.div>
+  );
+});
+
+/* ── Skeleton loader ───────────────────────────── */
+
+function SkeletonRows() {
+  return (
+    <div className="rounded-xl border bg-white overflow-hidden">
+      <div
+        className="grid px-4 py-2.5 border-b bg-slate-50/80 text-xs font-medium text-slate-500"
+        style={{ gridTemplateColumns: GRID_COLS }}
+      >
+        <span>Namn</span><span>Fordon</span><span>Kontakt</span>
+        <span>Tjänst</span><span>Försök</span><span>Status</span>
+        <span>Datum</span><span></span>
+      </div>
+      {Array.from({ length: 8 }).map((_, i) => (
+        <div
+          key={i}
+          className="grid items-center px-4 py-3.5 border-b border-slate-50 animate-pulse"
+          style={{ gridTemplateColumns: GRID_COLS }}
+        >
+          <div className="h-4 bg-slate-100 rounded w-3/4" />
+          <div className="h-3 bg-slate-100 rounded w-2/3" />
+          <div className="space-y-1.5">
+            <div className="h-3 bg-slate-100 rounded w-4/5" />
+            <div className="h-3 bg-slate-100 rounded w-3/5" />
+          </div>
+          <div className="h-3 bg-slate-100 rounded w-full" />
+          <div className="h-3 bg-slate-100 rounded w-1/2" />
+          <div className="h-6 bg-slate-100 rounded-full w-full" />
+          <div className="h-3 bg-slate-100 rounded w-3/4" />
+          <div className="h-6 bg-slate-100 rounded w-6 ml-auto" />
+        </div>
+      ))}
+    </div>
+  );
+}
+
 /* ── Main page ─────────────────────────────────── */
 
 export default function AdminLeadsPage() {
-  const [leads, setLeads] = useState<Lead[]>([]);
   const [filter, setFilter] = useState("all");
   const [search, setSearch] = useState("");
-  const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
+  const [selectedLeadId, setSelectedLeadId] = useState<string | null>(null);
   const [notes, setNotes] = useState("");
   const [dealValue, setDealValue] = useState("");
   const [bookingLead, setBookingLead] = useState<Lead | null>(null);
-  const [mechanics, setMechanics] = useState<Mechanic[]>([]);
-  const [attempts, setAttempts] = useState<Record<string, ContactAttempt[]>>({});
   const [attemptNote, setAttemptNote] = useState("");
   const [showAttemptForm, setShowAttemptForm] = useState(false);
+  const hasAnimated = useRef(false);
+  const parentRef = useRef<HTMLDivElement>(null);
+  const mobileParentRef = useRef<HTMLDivElement>(null);
+
   const supabase = createClient();
+  const queryClient = useQueryClient();
 
-  const loadLeads = useCallback(async () => {
-    const { data } = await supabase
-      .from("leads")
-      .select("*")
-      .order("created_at", { ascending: false });
-    if (data) setLeads(data);
-  }, [supabase]);
+  /* ── Queries ─────────────────────────────── */
 
-  const loadAttempts = useCallback(async () => {
-    const { data } = await supabase
-      .from("lead_contact_attempts")
-      .select("*")
-      .order("created_at", { ascending: false });
-    if (data) {
+  const { data: leads = [], isLoading: leadsLoading } = useQuery({
+    queryKey: ["leads"],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("leads")
+        .select("*")
+        .order("created_at", { ascending: false });
+      return (data ?? []) as Lead[];
+    },
+  });
+
+  const { data: attempts = {} } = useQuery({
+    queryKey: ["lead-attempts"],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("lead_contact_attempts")
+        .select("*")
+        .order("created_at", { ascending: false });
       const map: Record<string, ContactAttempt[]> = {};
-      for (const a of data) {
+      for (const a of (data ?? []) as ContactAttempt[]) {
         if (!map[a.lead_id]) map[a.lead_id] = [];
         map[a.lead_id].push(a);
       }
-      setAttempts(map);
-    }
-  }, [supabase]);
+      return map;
+    },
+  });
 
-  useEffect(() => {
-    loadLeads();
-    loadAttempts();
-    supabase
-      .from("mechanics")
-      .select("*")
-      .eq("is_active", true)
-      .order("name")
-      .then(({ data }) => { if (data) setMechanics(data); });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  const { data: mechanics = [] } = useQuery({
+    queryKey: ["mechanics"],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("mechanics")
+        .select("*")
+        .eq("is_active", true)
+        .order("name");
+      return (data ?? []) as Mechanic[];
+    },
+  });
 
-  async function updateStatus(id: string, status: string) {
-    const { error } = await supabase.from("leads").update({ status }).eq("id", id);
-    if (error) {
-      console.error("Failed to update status:", error);
-      return;
-    }
-    setLeads((prev) => prev.map((l) => (l.id === id ? { ...l, status: status as Lead["status"] } : l)));
-    if (selectedLead?.id === id) {
-      setSelectedLead((prev) => (prev ? { ...prev, status: status as Lead["status"] } : null));
-    }
-  }
+  /* ── Mutations ───────────────────────────── */
 
-  const autoSaveNotes = useCallback(async (val: string) => {
-    if (!selectedLead) return;
-    await supabase.from("leads").update({ notes: val }).eq("id", selectedLead.id);
-    setLeads((prev) =>
-      prev.map((l) => (l.id === selectedLead.id ? { ...l, notes: val } : l))
-    );
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedLead?.id]);
+  const statusMutation = useMutation({
+    mutationFn: async ({ id, status }: { id: string; status: string }) => {
+      const { error } = await supabase.from("leads").update({ status }).eq("id", id);
+      if (error) throw error;
+    },
+    onMutate: async ({ id, status }) => {
+      await queryClient.cancelQueries({ queryKey: ["leads"] });
+      const prev = queryClient.getQueryData<Lead[]>(["leads"]);
+      queryClient.setQueryData<Lead[]>(["leads"], (old) =>
+        old?.map((l) => (l.id === id ? { ...l, status: status as Lead["status"] } : l)) ?? []
+      );
+      return { prev };
+    },
+    onError: (_err, _vars, context) => {
+      if (context?.prev) queryClient.setQueryData(["leads"], context.prev);
+    },
+  });
 
-  const autoSaveDealValue = useCallback(async (val: string) => {
-    if (!selectedLead) return;
-    const num = val.trim() ? parseInt(val) : null;
-    await supabase.from("leads").update({ deal_value: num }).eq("id", selectedLead.id);
-    setLeads((prev) =>
-      prev.map((l) => (l.id === selectedLead.id ? { ...l, deal_value: num } : l))
-    );
-    setSelectedLead((prev) => (prev ? { ...prev, deal_value: num } : null));
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedLead?.id]);
+  const notesMutation = useMutation({
+    mutationFn: async ({ id, notes: val }: { id: string; notes: string }) => {
+      const { error } = await supabase.from("leads").update({ notes: val }).eq("id", id);
+      if (error) throw error;
+    },
+    onMutate: async ({ id, notes: val }) => {
+      await queryClient.cancelQueries({ queryKey: ["leads"] });
+      const prev = queryClient.getQueryData<Lead[]>(["leads"]);
+      queryClient.setQueryData<Lead[]>(["leads"], (old) =>
+        old?.map((l) => (l.id === id ? { ...l, notes: val } : l)) ?? []
+      );
+      return { prev };
+    },
+    onError: (_err, _vars, context) => {
+      if (context?.prev) queryClient.setQueryData(["leads"], context.prev);
+    },
+  });
 
-  async function logContactAttempt(method: "phone" | "sms" | "email") {
-    if (!selectedLead) return;
-    const { data } = await supabase
-      .from("lead_contact_attempts")
-      .insert({ lead_id: selectedLead.id, method, note: attemptNote.trim() || null })
-      .select()
-      .single();
-    if (data) {
-      setAttempts((prev) => ({
-        ...prev,
-        [selectedLead.id]: [data, ...(prev[selectedLead.id] || [])],
+  const dealValueMutation = useMutation({
+    mutationFn: async ({ id, value }: { id: string; value: number | null }) => {
+      const { error } = await supabase.from("leads").update({ deal_value: value }).eq("id", id);
+      if (error) throw error;
+    },
+    onMutate: async ({ id, value }) => {
+      await queryClient.cancelQueries({ queryKey: ["leads"] });
+      const prev = queryClient.getQueryData<Lead[]>(["leads"]);
+      queryClient.setQueryData<Lead[]>(["leads"], (old) =>
+        old?.map((l) => (l.id === id ? { ...l, deal_value: value } : l)) ?? []
+      );
+      return { prev };
+    },
+    onError: (_err, _vars, context) => {
+      if (context?.prev) queryClient.setQueryData(["leads"], context.prev);
+    },
+  });
+
+  const addAttemptMutation = useMutation({
+    mutationFn: async ({ leadId, method, note }: { leadId: string; method: "phone" | "sms" | "email"; note: string | null }) => {
+      const { data, error } = await supabase
+        .from("lead_contact_attempts")
+        .insert({ lead_id: leadId, method, note })
+        .select()
+        .single();
+      if (error) throw error;
+      return data as ContactAttempt;
+    },
+    onSuccess: (data) => {
+      queryClient.setQueryData<Record<string, ContactAttempt[]>>(["lead-attempts"], (old) => ({
+        ...old,
+        [data.lead_id]: [data, ...(old?.[data.lead_id] || [])],
       }));
-    }
-    setAttemptNote("");
-  }
+    },
+  });
 
-  async function deleteContactAttempt(attemptId: string) {
-    if (!selectedLead) return;
-    await supabase.from("lead_contact_attempts").delete().eq("id", attemptId);
-    setAttempts((prev) => ({
-      ...prev,
-      [selectedLead.id]: (prev[selectedLead.id] || []).filter((a) => a.id !== attemptId),
-    }));
-  }
+  const deleteAttemptMutation = useMutation({
+    mutationFn: async ({ attemptId, leadId }: { attemptId: string; leadId: string }) => {
+      const { error } = await supabase.from("lead_contact_attempts").delete().eq("id", attemptId);
+      if (error) throw error;
+      return { attemptId, leadId };
+    },
+    onMutate: async ({ attemptId, leadId }) => {
+      await queryClient.cancelQueries({ queryKey: ["lead-attempts"] });
+      const prev = queryClient.getQueryData<Record<string, ContactAttempt[]>>(["lead-attempts"]);
+      queryClient.setQueryData<Record<string, ContactAttempt[]>>(["lead-attempts"], (old) => ({
+        ...old,
+        [leadId]: (old?.[leadId] || []).filter((a) => a.id !== attemptId),
+      }));
+      return { prev };
+    },
+    onError: (_err, _vars, context) => {
+      if (context?.prev) queryClient.setQueryData(["lead-attempts"], context.prev);
+    },
+  });
 
-  function openLead(lead: Lead) {
-    setSelectedLead(lead);
+  /* ── Callbacks ───────────────────────────── */
+
+  const updateStatus = useCallback(
+    (id: string, status: string) => statusMutation.mutate({ id, status }),
+    [statusMutation]
+  );
+
+  const autoSaveNotes = useCallback(
+    (val: string) => {
+      if (!selectedLeadId) return;
+      notesMutation.mutate({ id: selectedLeadId, notes: val });
+    },
+    [selectedLeadId, notesMutation]
+  );
+
+  const autoSaveDealValue = useCallback(
+    (val: string) => {
+      if (!selectedLeadId) return;
+      const num = val.trim() ? parseInt(val) : null;
+      dealValueMutation.mutate({ id: selectedLeadId, value: num });
+    },
+    [selectedLeadId, dealValueMutation]
+  );
+
+  const logContactAttempt = useCallback(
+    (method: "phone" | "sms" | "email") => {
+      if (!selectedLeadId) return;
+      addAttemptMutation.mutate({ leadId: selectedLeadId, method, note: attemptNote.trim() || null });
+      setAttemptNote("");
+    },
+    [selectedLeadId, attemptNote, addAttemptMutation]
+  );
+
+  const deleteContactAttempt = useCallback(
+    (attemptId: string) => {
+      if (!selectedLeadId) return;
+      deleteAttemptMutation.mutate({ attemptId, leadId: selectedLeadId });
+    },
+    [selectedLeadId, deleteAttemptMutation]
+  );
+
+  const openLead = useCallback((lead: Lead) => {
+    setSelectedLeadId(lead.id);
     setNotes(lead.notes || "");
     setDealValue(lead.deal_value?.toString() || "");
     setShowAttemptForm(false);
     setAttemptNote("");
-  }
+  }, []);
 
-  /* ── Filtering ─────────────────────────────── */
+  const handleBookLead = useCallback((lead: Lead) => {
+    setBookingLead(lead);
+    setSelectedLeadId(null);
+  }, []);
+
+  /* ── Filtering ───────────────────────────── */
 
   const filteredLeads = useMemo(() => {
     let result = leads;
@@ -313,6 +592,17 @@ export default function AdminLeadsPage() {
     return groups;
   }, [filteredLeads]);
 
+  const virtualItems = useMemo(() => {
+    const items: VirtualItem[] = [];
+    for (const group of groupedLeads) {
+      items.push({ type: "header", key: `h-${group.key}`, label: group.label, count: group.leads.length });
+      for (const lead of group.leads) {
+        items.push({ type: "lead", key: lead.id, lead });
+      }
+    }
+    return items;
+  }, [groupedLeads]);
+
   const statusCounts = useMemo(() => {
     const counts: Record<string, number> = { all: leads.length };
     for (const l of leads) {
@@ -321,34 +611,66 @@ export default function AdminLeadsPage() {
     return counts;
   }, [leads]);
 
-  const leadAttempts = selectedLead ? (attempts[selectedLead.id] || []) : [];
+  /* ── Virtualizer ─────────────────────────── */
 
-  /* ── Render ────────────────────────────────── */
+  const rowVirtualizer = useVirtualizer({
+    count: virtualItems.length,
+    getScrollElement: () => parentRef.current,
+    estimateSize: (index) => (virtualItems[index].type === "header" ? 40 : 56),
+    overscan: 10,
+    getItemKey: (index) => virtualItems[index].key,
+  });
+
+  const mobileVirtualizer = useVirtualizer({
+    count: filteredLeads.length,
+    getScrollElement: () => mobileParentRef.current,
+    estimateSize: () => 130,
+    overscan: 5,
+    getItemKey: (index) => filteredLeads[index]?.id ?? index,
+  });
+
+  // Mark animation as done after initial render
+  useEffect(() => {
+    if (!leadsLoading && leads.length > 0 && !hasAnimated.current) {
+      const t = setTimeout(() => {
+        hasAnimated.current = true;
+      }, 600);
+      return () => clearTimeout(t);
+    }
+  }, [leadsLoading, leads.length]);
+
+  const selectedLead = selectedLeadId ? leads.find((l) => l.id === selectedLeadId) ?? null : null;
+  const leadAttempts = selectedLeadId ? (attempts[selectedLeadId] || []) : [];
+
+  /* ── Render ──────────────────────────────── */
 
   return (
-    <div>
-      <div className="flex items-center justify-between mb-6">
+    <div className="flex flex-col h-[calc(100vh-4rem)]">
+      <div className="flex items-center justify-between mb-5 shrink-0">
         <h1 className="text-2xl font-bold text-slate-900">Leads</h1>
       </div>
 
       {/* Status tabs + Search */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 mb-6">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 mb-5 shrink-0">
         <div className="flex flex-wrap gap-1.5">
           {statusConfig.map((s) => (
             <button
               key={s.value}
               onClick={() => setFilter(s.value)}
-              className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
+              className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-200 ${
                 filter === s.value
-                  ? "bg-slate-900 text-white"
+                  ? "bg-slate-900 text-white shadow-sm"
                   : "bg-slate-100 text-slate-600 hover:bg-slate-200"
               }`}
             >
               {s.label}
               {(statusCounts[s.value] ?? 0) > 0 && (
-                <span className={`ml-1.5 ${filter === s.value ? "text-white/60" : "text-slate-400"}`}>
+                <motion.span
+                  layout
+                  className={`ml-1.5 ${filter === s.value ? "text-white/60" : "text-slate-400"}`}
+                >
                   {statusCounts[s.value]}
-                </span>
+                </motion.span>
               )}
             </button>
           ))}
@@ -365,196 +687,150 @@ export default function AdminLeadsPage() {
         </div>
       </div>
 
-      {/* Grouped leads */}
-      {groupedLeads.length === 0 ? (
+      {/* Content area */}
+      {leadsLoading ? (
+        <div className="hidden md:block"><SkeletonRows /></div>
+      ) : virtualItems.length === 0 ? (
         <div className="rounded-xl border bg-white p-12 text-center text-slate-500">
           Inga leads att visa.
         </div>
       ) : (
-        groupedLeads.map((group) => (
-          <div key={group.key} className="mb-8">
-            <h2 className="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-3">
-              {group.label}
-              <span className="ml-2 text-slate-400 font-normal">({group.leads.length})</span>
-            </h2>
+        <>
+          {/* ── Desktop: Virtualized CSS Grid ── */}
+          <div className="hidden md:flex flex-col flex-1 min-h-0 rounded-xl border bg-white overflow-hidden">
+            {/* Column headers */}
+            <div
+              className="grid px-4 py-2.5 border-b bg-slate-50/80 text-xs font-medium text-slate-500 shrink-0"
+              style={{ gridTemplateColumns: GRID_COLS }}
+            >
+              <span>Namn</span>
+              <span>Fordon</span>
+              <span>Kontakt</span>
+              <span>Tjänst</span>
+              <span>Försök</span>
+              <span>Status</span>
+              <span>Datum</span>
+              <span></span>
+            </div>
 
-            {/* Desktop table */}
-            <div className="hidden md:block rounded-xl border bg-white overflow-hidden">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Namn</TableHead>
-                    <TableHead>Fordon</TableHead>
-                    <TableHead>Kontakt</TableHead>
-                    <TableHead>Tjänst</TableHead>
-                    <TableHead>Kontaktförsök</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Datum</TableHead>
-                    <TableHead className="w-20"></TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {group.leads.map((lead) => (
-                    <TableRow
-                      key={lead.id}
-                      className="cursor-pointer hover:bg-slate-50"
-                      onClick={() => openLead(lead)}
+            {/* Virtualized rows */}
+            <div ref={parentRef} className="flex-1 overflow-auto">
+              <div style={{ height: rowVirtualizer.getTotalSize(), position: "relative" }}>
+                {rowVirtualizer.getVirtualItems().map((virtualRow) => {
+                  const item = virtualItems[virtualRow.index];
+                  return (
+                    <div
+                      key={item.key}
+                      data-index={virtualRow.index}
+                      ref={rowVirtualizer.measureElement}
+                      style={{
+                        position: "absolute",
+                        top: 0,
+                        left: 0,
+                        width: "100%",
+                        transform: `translateY(${virtualRow.start}px)`,
+                      }}
                     >
-                      <TableCell className="font-medium">
-                        <div>
-                          {lead.name}
-                          {lead.deal_value != null && lead.deal_value > 0 && (
-                            <span className="ml-2 text-xs text-green-700 font-mono">{lead.deal_value.toLocaleString("sv-SE")} kr</span>
-                          )}
+                      {item.type === "header" ? (
+                        <div className="px-4 py-2 text-sm font-semibold text-slate-500 uppercase tracking-wider bg-slate-50/60 backdrop-blur-sm border-b border-slate-100">
+                          {item.label}
+                          <span className="ml-2 text-slate-400 font-normal normal-case tracking-normal">({item.count})</span>
                         </div>
-                        {lead.preferred_time === "Snarast" && (
-                          <span className="inline-flex items-center gap-0.5 text-xs text-red-600 font-semibold">
-                            <AlertCircle className="h-3 w-3" /> Snarast
-                          </span>
-                        )}
-                      </TableCell>
-                      <TableCell className="text-sm text-slate-500">
-                        {lead.reg_number || lead.car_model ? (
-                          <div>
-                            {lead.reg_number && <span className="font-mono font-medium text-slate-700">{lead.reg_number}</span>}
-                            {lead.car_model && <p className="text-xs">{lead.car_model}</p>}
+                      ) : (
+                        <LeadGridRow
+                          lead={item.lead}
+                          attempts={attempts[item.lead.id] || []}
+                          onOpen={openLead}
+                          onUpdateStatus={updateStatus}
+                          onBook={handleBookLead}
+                          shouldAnimate={!hasAnimated.current}
+                          animationDelay={Math.min(virtualRow.index * 0.03, 0.3)}
+                        />
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+
+          {/* ── Mobile: Virtualized cards ── */}
+          <div ref={mobileParentRef} className="md:hidden flex-1 overflow-auto">
+            <div style={{ height: mobileVirtualizer.getTotalSize(), position: "relative" }}>
+              {mobileVirtualizer.getVirtualItems().map((virtualRow) => {
+                const lead = filteredLeads[virtualRow.index];
+                if (!lead) return null;
+                return (
+                  <div
+                    key={lead.id}
+                    data-index={virtualRow.index}
+                    ref={mobileVirtualizer.measureElement}
+                    style={{
+                      position: "absolute",
+                      top: 0,
+                      left: 0,
+                      width: "100%",
+                      transform: `translateY(${virtualRow.start}px)`,
+                      padding: "0 0 8px 0",
+                    }}
+                  >
+                    <motion.button
+                      initial={!hasAnimated.current ? { opacity: 0, y: 6 } : false}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={!hasAnimated.current ? { duration: 0.2, delay: Math.min(virtualRow.index * 0.04, 0.3) } : undefined}
+                      onClick={() => openLead(lead)}
+                      className="w-full text-left rounded-xl border bg-white p-4 active:bg-slate-50 transition-colors"
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-2 mb-1">
+                            <span className="font-semibold text-slate-900 truncate">{lead.name}</span>
+                            {lead.preferred_time === "Snarast" && (
+                              <AlertCircle className="h-3.5 w-3.5 text-red-500 shrink-0" />
+                            )}
                           </div>
-                        ) : "—"}
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex flex-col gap-1 text-sm">
+                          <div className="flex items-center gap-2 text-xs text-slate-500 mb-2">
+                            {lead.reg_number && <span className="font-mono">{lead.reg_number}</span>}
+                            {lead.car_model && <span>{lead.car_model}</span>}
+                          </div>
+                          <p className="text-xs text-slate-500 truncate">
+                            {lead.selected_services?.length
+                              ? lead.selected_services.join(", ")
+                              : lead.service_interest || "—"}
+                          </p>
+                        </div>
+                        <div className="flex flex-col items-end gap-2 shrink-0">
+                          <Badge className={`${statusColors[lead.status]} border-0 text-[10px] whitespace-nowrap`}>
+                            {statusLabels[lead.status]}
+                          </Badge>
+                          <div className="flex items-center gap-2">
+                            <ContactSummary attempts={attempts[lead.id] || []} />
+                            {lead.deal_value != null && lead.deal_value > 0 && (
+                              <span className="text-[10px] text-green-700 font-mono">{lead.deal_value.toLocaleString("sv-SE")} kr</span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                      <div className="flex items-center justify-between mt-3 pt-3 border-t border-slate-100">
+                        <div className="flex items-center gap-3 text-xs text-slate-400">
                           {lead.phone && (
-                            <a href={`tel:${lead.phone}`} className="flex items-center gap-1 text-slate-600 hover:text-slate-900" onClick={(e) => e.stopPropagation()}>
+                            <a href={`tel:${lead.phone}`} className="flex items-center gap-1 hover:text-slate-700" onClick={(e) => e.stopPropagation()}>
                               <Phone className="h-3 w-3" /> {lead.phone}
                             </a>
                           )}
-                          {lead.email && (
-                            <a href={`mailto:${lead.email}`} className="flex items-center gap-1 text-slate-600 hover:text-slate-900 truncate max-w-[180px]" onClick={(e) => e.stopPropagation()}>
-                              <Mail className="h-3 w-3" /> {lead.email}
-                            </a>
-                          )}
                         </div>
-                      </TableCell>
-                      <TableCell className="text-sm text-slate-500 max-w-[160px] truncate">
-                        {lead.selected_services?.length
-                          ? lead.selected_services.join(", ")
-                          : lead.service_interest || "—"}
-                      </TableCell>
-                      <TableCell>
-                        <ContactSummary attempts={attempts[lead.id] || []} />
-                      </TableCell>
-                      <TableCell>
-                        <Select
-                          value={lead.status}
-                          onValueChange={(val) => updateStatus(lead.id, val)}
-                        >
-                          <SelectTrigger
-                            className={`w-36 h-8 ${statusColors[lead.status]} border-0 font-medium text-xs`}
-                            onClick={(e) => e.stopPropagation()}
-                          >
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="ska_kontaktas">Ska kontaktas</SelectItem>
-                            <SelectItem value="bokad">Bokad</SelectItem>
-                            <SelectItem value="ej_affar">Ej affär</SelectItem>
-                            <SelectItem value="affar">Affär</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </TableCell>
-                      <TableCell className="text-sm text-slate-500">
-                        {new Date(lead.created_at).toLocaleDateString("sv-SE")}
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex gap-1">
-                          {lead.status === "ska_kontaktas" && (
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="text-amber-600 hover:text-amber-700 hover:bg-amber-50"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setBookingLead(lead);
-                              }}
-                              title="Boka in"
-                            >
-                              <CalendarPlus className="h-4 w-4" />
-                            </Button>
-                          )}
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              openLead(lead);
-                            }}
-                          >
-                            <MessageSquare className="h-4 w-4" />
-                          </Button>
+                        <div className="flex items-center gap-1 text-xs text-slate-400">
+                          {new Date(lead.created_at).toLocaleDateString("sv-SE")}
+                          <ChevronRight className="h-3.5 w-3.5" />
                         </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-
-            {/* Mobile card list */}
-            <div className="md:hidden space-y-2">
-              {group.leads.map((lead) => (
-                <button
-                  key={lead.id}
-                  onClick={() => openLead(lead)}
-                  className="w-full text-left rounded-xl border bg-white p-4 active:bg-slate-50 transition-colors"
-                >
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className="font-semibold text-slate-900 truncate">{lead.name}</span>
-                        {lead.preferred_time === "Snarast" && (
-                          <AlertCircle className="h-3.5 w-3.5 text-red-500 shrink-0" />
-                        )}
                       </div>
-                      <div className="flex items-center gap-2 text-xs text-slate-500 mb-2">
-                        {lead.reg_number && <span className="font-mono">{lead.reg_number}</span>}
-                        {lead.car_model && <span>{lead.car_model}</span>}
-                      </div>
-                      <p className="text-xs text-slate-500 truncate">
-                        {lead.selected_services?.length
-                          ? lead.selected_services.join(", ")
-                          : lead.service_interest || "—"}
-                      </p>
-                    </div>
-                    <div className="flex flex-col items-end gap-2 shrink-0">
-                      <Badge className={`${statusColors[lead.status]} border-0 text-[10px] whitespace-nowrap`}>
-                        {statusLabels[lead.status]}
-                      </Badge>
-                      <div className="flex items-center gap-2">
-                        <ContactSummary attempts={attempts[lead.id] || []} />
-                        {lead.deal_value != null && lead.deal_value > 0 && (
-                          <span className="text-[10px] text-green-700 font-mono">{lead.deal_value.toLocaleString("sv-SE")} kr</span>
-                        )}
-                      </div>
-                    </div>
+                    </motion.button>
                   </div>
-                  <div className="flex items-center justify-between mt-3 pt-3 border-t border-slate-100">
-                    <div className="flex items-center gap-3 text-xs text-slate-400">
-                      {lead.phone && (
-                        <a href={`tel:${lead.phone}`} className="flex items-center gap-1 hover:text-slate-700" onClick={(e) => e.stopPropagation()}>
-                          <Phone className="h-3 w-3" /> {lead.phone}
-                        </a>
-                      )}
-                    </div>
-                    <div className="flex items-center gap-1 text-xs text-slate-400">
-                      {new Date(lead.created_at).toLocaleDateString("sv-SE")}
-                      <ChevronRight className="h-3.5 w-3.5" />
-                    </div>
-                  </div>
-                </button>
-              ))}
+                );
+              })}
             </div>
           </div>
-        ))
+        </>
       )}
 
       {/* ── Lead Detail Dialog ──────────────── */}
@@ -570,13 +846,13 @@ export default function AdminLeadsPage() {
           setAttemptNote={setAttemptNote}
           showAttemptForm={showAttemptForm}
           setShowAttemptForm={setShowAttemptForm}
-          onClose={() => setSelectedLead(null)}
+          onClose={() => setSelectedLeadId(null)}
           onUpdateStatus={(status) => updateStatus(selectedLead.id, status)}
           onLogAttempt={logContactAttempt}
           onDeleteAttempt={deleteContactAttempt}
           onBookLead={() => {
             setBookingLead(selectedLead);
-            setSelectedLead(null);
+            setSelectedLeadId(null);
           }}
           autoSaveNotes={autoSaveNotes}
           autoSaveDealValue={autoSaveDealValue}
@@ -589,7 +865,7 @@ export default function AdminLeadsPage() {
         onOpenChange={(open) => !open && setBookingLead(null)}
         lead={bookingLead}
         mechanics={mechanics}
-        onSaved={loadLeads}
+        onSaved={() => queryClient.invalidateQueries({ queryKey: ["leads"] })}
       />
     </div>
   );
