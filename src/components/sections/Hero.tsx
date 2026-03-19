@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { motion } from "framer-motion";
 import { HeroCanvas } from "@/components/3d/HeroCanvas";
 import { useEffect, useState } from "react";
@@ -49,8 +50,16 @@ export function Hero() {
           animate="show"
           className="max-w-2xl"
         >
-          {/* Badge */}
+          {/* Logo + Badge */}
           <motion.div variants={fadeUp} className="mb-8">
+            <Image
+              src="/images/tb-vit-logo.png"
+              alt="Tullinge Bilteknik"
+              width={200}
+              height={70}
+              className="h-16 w-auto mb-5"
+              priority
+            />
             <span className="font-mono text-[11px] tracking-[0.2em] uppercase text-white/40">
               Bilverkstad i Tullinge
             </span>
