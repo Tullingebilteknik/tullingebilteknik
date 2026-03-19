@@ -57,7 +57,7 @@ export function Hero() {
               alt="Tullinge Bilteknik"
               width={200}
               height={70}
-              className="h-16 w-auto mb-5"
+              className="hidden sm:block h-16 w-auto mb-5"
               priority
             />
             <span className="font-mono text-[11px] tracking-[0.2em] uppercase text-white/40">
