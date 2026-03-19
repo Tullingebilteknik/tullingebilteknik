@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState, useMemo, Suspense } from "react";
-import dynamic from "next/dynamic";
+import { useEffect, useState, useMemo } from "react";
+import { motion } from "framer-motion";
 import { createClient } from "@/lib/supabase/client";
 import type { Lead } from "@/lib/types";
 import {
@@ -23,26 +23,17 @@ import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 
-/* ── Dynamic import for R3F (no SSR) ──────────── */
+/* ── Flow node order & edge definitions ────────── */
 
-const FlowCanvas = dynamic(
-  () => import("@/components/admin/flow/FlowScene"),
-  { ssr: false }
-);
+const FLOW_STATES: LeadState[] = ["INCOMING", "TO_BE_CONTACTED", "BOOKED", "DEAL"];
+const BOTTOM_STATE: LeadState = "NO_DEAL";
 
-/* ── Desktop check ─────────────────────────────── */
-
-function useIsDesktop() {
-  const [isDesktop, setIsDesktop] = useState(false);
-  useEffect(() => {
-    const check = () =>
-      setIsDesktop(window.innerWidth >= 768 && (navigator.hardwareConcurrency ?? 4) >= 4);
-    check();
-    window.addEventListener("resize", check);
-    return () => window.removeEventListener("resize", check);
-  }, []);
-  return isDesktop;
-}
+const EDGES: { from: LeadState; to: LeadState }[] = [
+  { from: "INCOMING", to: "TO_BE_CONTACTED" },
+  { from: "TO_BE_CONTACTED", to: "BOOKED" },
+  { from: "BOOKED", to: "DEAL" },
+  { from: "TO_BE_CONTACTED", to: "NO_DEAL" },
+];
 
 /* ── Helpers ───────────────────────────────────── */
 
@@ -65,12 +56,161 @@ const statusColorsDb: Record<string, string> = {
   affar: "bg-green-100 text-green-800",
 };
 
+/* ── GlassNode component ──────────────────────── */
+
+function GlassNode({
+  id,
+  label,
+  count,
+  value,
+  isActive,
+  onClick,
+}: {
+  id: LeadState;
+  label: string;
+  count: number;
+  value: number;
+  isActive: boolean;
+  onClick: () => void;
+}) {
+  const color = stateColors[id];
+  const valueText =
+    value > 0
+      ? `${id === "NO_DEAL" ? "-" : ""}${value.toLocaleString("sv-SE")} kr`
+      : null;
+
+  return (
+    <motion.button
+      onClick={onClick}
+      whileHover={{ scale: 1.04 }}
+      whileTap={{ scale: 0.98 }}
+      className="relative group cursor-pointer focus:outline-none"
+      style={{ minWidth: 140 }}
+    >
+      {/* Glow ring when active */}
+      {isActive && (
+        <motion.div
+          layoutId="activeGlow"
+          className="absolute -inset-1.5 rounded-2xl"
+          style={{
+            background: `${color}20`,
+            border: `1px solid ${color}60`,
+          }}
+          transition={{ type: "spring", stiffness: 300, damping: 30 }}
+        />
+      )}
+
+      <div
+        className="relative rounded-xl px-6 py-4 flex flex-col items-center text-center transition-all duration-300"
+        style={{
+          background: "rgba(255, 255, 255, 0.04)",
+          backdropFilter: "blur(16px)",
+          WebkitBackdropFilter: "blur(16px)",
+          border: isActive
+            ? `1px solid ${color}50`
+            : "1px solid rgba(255, 255, 255, 0.08)",
+          borderTop: `2px solid ${color}`,
+          boxShadow: isActive
+            ? `0 8px 32px rgba(0, 0, 0, 0.3), 0 0 20px ${color}15`
+            : "0 8px 32px rgba(0, 0, 0, 0.2)",
+        }}
+      >
+        {/* Label */}
+        <span
+          className="text-[11px] uppercase tracking-[1.5px] mb-2 transition-colors duration-300"
+          style={{ color: isActive ? `${color}` : "rgba(255, 255, 255, 0.35)" }}
+        >
+          {label}
+        </span>
+
+        {/* Count */}
+        <span
+          className="text-3xl font-semibold tabular-nums transition-colors duration-300"
+          style={{
+            fontFamily: "'JetBrains Mono', ui-monospace, monospace",
+            color: "#ffffff",
+            textShadow: isActive ? `0 0 20px ${color}40` : "0 0 10px rgba(255,255,255,0.1)",
+          }}
+        >
+          {count}
+        </span>
+
+        {/* Value */}
+        {valueText && (
+          <span className="text-[11px] mt-1.5 text-white/30 font-mono">
+            {valueText}
+          </span>
+        )}
+      </div>
+    </motion.button>
+  );
+}
+
+/* ── FlowEdge (CSS animated line) ─────────────── */
+
+function FlowEdge({
+  from,
+  to,
+  conversionRate,
+  direction,
+}: {
+  from: LeadState;
+  to: LeadState;
+  conversionRate: number;
+  direction: "horizontal" | "vertical";
+}) {
+  const color = stateColors[to];
+  const thickness = Math.max(2, conversionRate * 6);
+
+  if (direction === "horizontal") {
+    return (
+      <div className="flex items-center mx-1" style={{ width: 40 }}>
+        <div className="relative w-full overflow-hidden" style={{ height: thickness }}>
+          <div
+            className="absolute inset-0 rounded-full"
+            style={{ background: `${color}30` }}
+          />
+          <motion.div
+            className="absolute inset-y-0 rounded-full"
+            style={{
+              width: "40%",
+              background: `linear-gradient(90deg, transparent, ${color}80, transparent)`,
+            }}
+            animate={{ left: ["-40%", "100%"] }}
+            transition={{ duration: 2 + (1 - conversionRate) * 2, repeat: Infinity, ease: "linear" }}
+          />
+        </div>
+      </div>
+    );
+  }
+
+  // Vertical edge (to NO_DEAL)
+  return (
+    <div className="flex flex-col items-center my-1" style={{ height: 48 }}>
+      <div className="relative overflow-hidden" style={{ width: thickness, height: "100%" }}>
+        <div
+          className="absolute inset-0 rounded-full"
+          style={{ background: `${color}30` }}
+        />
+        <motion.div
+          className="absolute inset-x-0 rounded-full"
+          style={{
+            height: "40%",
+            background: `linear-gradient(180deg, transparent, ${color}80, transparent)`,
+          }}
+          animate={{ top: ["-40%", "100%"] }}
+          transition={{ duration: 2.5, repeat: Infinity, ease: "linear" }}
+        />
+      </div>
+    </div>
+  );
+}
+
 /* ── Main page ─────────────────────────────────── */
 
 export default function LeadStatistikPage() {
   const [leads, setLeads] = useState<Lead[]>([]);
   const [activeNode, setActiveNode] = useState<LeadState | null>(null);
-  const isDesktop = useIsDesktop();
   const supabase = createClient();
 
   useEffect(() => {
@@ -85,6 +225,16 @@ export default function LeadStatistikPage() {
   }, []);
 
   const payload = useMemo(() => computeFlowPayload(leads), [leads]);
+
+  /* ── Edge data ───────────────────────────── */
+
+  const edgeRates = useMemo(() => {
+    const map: Record<string, number> = {};
+    for (const edge of payload.edges) {
+      map[`${edge.source}-${edge.target}`] = edge.conversionRate;
+    }
+    return map;
+  }, [payload.edges]);
 
   /* ── Filtered leads for table ──────────── */
 
@@ -159,7 +309,7 @@ export default function LeadStatistikPage() {
       </div>
 
       {/* ── Flow visualization ──────────── */}
-      <div className="rounded-xl border bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 mb-8 overflow-hidden">
+      <div className="rounded-xl border bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 mb-8 overflow-visible">
         <div className="px-6 pt-5 pb-2 flex items-center justify-between">
           <h2 className="text-sm font-semibold text-white/40 uppercase tracking-wider">Konverteringsflöde</h2>
           {activeNode && (
@@ -172,49 +322,63 @@ export default function LeadStatistikPage() {
           )}
         </div>
 
-        {isDesktop ? (
-          <div className="h-[320px] w-full">
-            <Suspense
-              fallback={
-                <div className="h-full flex items-center justify-center">
-                  <div className="text-white/20 text-sm">Laddar visualisering...</div>
-                </div>
-              }
-            >
-              <FlowCanvas payload={payload} activeNode={activeNode} onNodeClick={setActiveNode} />
-            </Suspense>
-          </div>
-        ) : (
-          /* Mobile fallback: CSS cards */
-          <div className="px-4 pb-4 grid grid-cols-2 gap-2">
-            {(["INCOMING", "TO_BE_CONTACTED", "BOOKED", "DEAL", "NO_DEAL"] as LeadState[]).map((id) => {
+        {/* Flow layout */}
+        <div className="px-6 pb-8 pt-4">
+          {/* Main horizontal flow */}
+          <div className="flex items-center justify-center gap-0">
+            {FLOW_STATES.map((id, i) => {
               const node = payload.nodes[id];
               const isActive = activeNode === id;
+              const edgeKey = i < FLOW_STATES.length - 1
+                ? `${FLOW_STATES[i]}-${FLOW_STATES[i + 1]}`
+                : null;
+
               return (
-                <button
-                  key={id}
-                  onClick={() => setActiveNode(isActive ? null : id)}
-                  className={`rounded-lg p-3 text-left transition-all ${
-                    id === "NO_DEAL" ? "col-span-2" : ""
-                  } ${isActive ? "ring-2 ring-white/40" : ""}`}
-                  style={{
-                    background: `${stateColors[id]}22`,
-                    borderLeft: `3px solid ${stateColors[id]}`,
-                  }}
-                >
-                  <p className="text-[11px] text-white/50">{node.label}</p>
-                  <p className="text-xl font-bold text-white">{node.metrics.count}</p>
-                  {node.metrics.financialValue > 0 && (
-                    <p className="text-[10px] text-white/40 mt-0.5">
-                      {id === "NO_DEAL" ? "-" : ""}
-                      {node.metrics.financialValue.toLocaleString("sv-SE")} kr
-                    </p>
+                <div key={id} className="flex items-center">
+                  <GlassNode
+                    id={id}
+                    label={node.label}
+                    count={node.metrics.count}
+                    value={node.metrics.financialValue}
+                    isActive={isActive}
+                    onClick={() => setActiveNode(isActive ? null : id)}
+                  />
+                  {edgeKey && (
+                    <FlowEdge
+                      from={FLOW_STATES[i]}
+                      to={FLOW_STATES[i + 1]}
+                      conversionRate={edgeRates[edgeKey] ?? 0}
+                      direction="horizontal"
+                    />
                   )}
-                </button>
+                </div>
               );
             })}
           </div>
-        )}
+
+          {/* Vertical branch to NO_DEAL */}
+          <div className="flex justify-center mt-0">
+            {/* Offset to align under TO_BE_CONTACTED (2nd node) */}
+            <div className="flex flex-col items-center" style={{ marginLeft: "-220px" }}>
+              <FlowEdge
+                from="TO_BE_CONTACTED"
+                to="NO_DEAL"
+                conversionRate={edgeRates["TO_BE_CONTACTED-NO_DEAL"] ?? 0}
+                direction="vertical"
+              />
+              <GlassNode
+                id={BOTTOM_STATE}
+                label={payload.nodes[BOTTOM_STATE].label}
+                count={payload.nodes[BOTTOM_STATE].metrics.count}
+                value={payload.nodes[BOTTOM_STATE].metrics.financialValue}
+                isActive={activeNode === BOTTOM_STATE}
+                onClick={() =>
+                  setActiveNode(activeNode === BOTTOM_STATE ? null : BOTTOM_STATE)
+                }
+              />
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* ── Filtered lead table ─────────── */}
