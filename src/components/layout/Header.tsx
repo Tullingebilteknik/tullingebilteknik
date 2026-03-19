@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
 import { Menu, X, Phone } from "lucide-react";
@@ -19,14 +20,16 @@ export function Header() {
   return (
     <header className="sticky top-0 z-50 w-full bg-white/80 backdrop-blur-xl border-b border-border/50">
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
-        {/* Typographic Logo */}
-        <Link href="/" className="flex flex-col leading-none">
-          <span className="font-heading text-lg font-700 tracking-tight text-foreground">
-            TULLINGE
-          </span>
-          <span className="font-heading text-[10px] font-500 tracking-[0.25em] uppercase text-muted-foreground">
-            Bilteknik
-          </span>
+        {/* Logo */}
+        <Link href="/" className="flex items-center">
+          <Image
+            src="/images/tb-logo-svart.png"
+            alt="Tullinge Bilteknik"
+            width={160}
+            height={40}
+            className="h-9 w-auto"
+            priority
+          />
         </Link>
 
         {/* Desktop Nav */}
