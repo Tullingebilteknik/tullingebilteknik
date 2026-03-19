@@ -35,10 +35,10 @@ export function CTABanner() {
               Boka service
             </a>
             <a
-              href="tel:0812345678"
+              href="tel:087786050"
               className="text-sm text-white/40 hover:text-white transition-colors"
             >
-              eller ring 08-123 456 78
+              eller ring 08-778 60 50
             </a>
           </div>
         </ScrollReveal>

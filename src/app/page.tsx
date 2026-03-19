@@ -42,13 +42,13 @@ export default async function HomePage() {
             description:
               "Professionell bilverkstad i Tullinge. Service, reparation och diagnostik av alla bilmärken.",
             url: "https://tullingebilteknik.se",
-            telephone: "08-123 456 78",
+            telephone: "08-778 60 50",
             email: "info@tullingebilteknik.se",
             address: {
               "@type": "PostalAddress",
-              streetAddress: "Exempelgatan 1",
+              streetAddress: "Mekanikervägen 3",
               addressLocality: "Tullinge",
-              postalCode: "146 30",
+              postalCode: "146 33",
               addressRegion: "Stockholm",
               addressCountry: "SE",
             },

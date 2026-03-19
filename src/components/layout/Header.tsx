@@ -46,11 +46,11 @@ export function Header() {
         <div className="flex items-center gap-3">
           {/* Desktop: phone number */}
           <a
-            href="tel:0812345678"
+            href="tel:087786050"
             className="hidden md:inline-flex items-center gap-1.5 font-mono text-xs text-foreground/50 hover:text-foreground transition-colors"
           >
             <Phone className="h-3.5 w-3.5" />
-            08-123 456 78
+            08-778 60 50
           </a>
 
           <a
@@ -62,7 +62,7 @@ export function Header() {
 
           {/* Mobile: phone icon */}
           <a
-            href="tel:0812345678"
+            href="tel:087786050"
             className="sm:hidden inline-flex items-center justify-center w-9 h-9 rounded-full text-foreground/50 hover:text-foreground transition-colors"
           >
             <Phone className="h-4 w-4" />

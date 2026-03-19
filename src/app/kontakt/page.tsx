@@ -54,10 +54,10 @@ export default function KontaktPage() {
                       <div>
                         <p className="font-mono text-[11px] text-muted-foreground uppercase tracking-widest">Telefon</p>
                         <a
-                          href="tel:0812345678"
+                          href="tel:087786050"
                           className="text-foreground font-500 hover:text-primary transition-colors"
                         >
-                          08-123 456 78
+                          08-778 60 50
                         </a>
                       </div>
                     </li>
@@ -78,8 +78,8 @@ export default function KontaktPage() {
                       <div>
                         <p className="font-mono text-[11px] text-muted-foreground uppercase tracking-widest">Adress</p>
                         <p className="text-foreground font-500">
-                          Exempelgatan 1<br />
-                          146 30 Tullinge
+                          Mekanikervägen 3<br />
+                          146 33 Tullinge
                         </p>
                       </div>
                     </li>

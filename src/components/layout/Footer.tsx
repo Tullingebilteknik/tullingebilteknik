@@ -77,8 +77,8 @@ export function Footer() {
             <ul className="space-y-3">
               <li className="flex items-start gap-3">
                 <Phone className="h-4 w-4 mt-0.5 text-white/30 shrink-0" />
-                <a href="tel:0812345678" className="font-mono text-sm text-white/50 hover:text-white transition-colors">
-                  08-123 456 78
+                <a href="tel:087786050" className="font-mono text-sm text-white/50 hover:text-white transition-colors">
+                  08-778 60 50
                 </a>
               </li>
               <li className="flex items-start gap-3">
@@ -90,8 +90,8 @@ export function Footer() {
               <li className="flex items-start gap-3">
                 <MapPin className="h-4 w-4 mt-0.5 text-white/30 shrink-0" />
                 <span className="font-mono text-sm text-white/50">
-                  Exempelgatan 1<br />
-                  146 30 Tullinge
+                  Mekanikervägen 3<br />
+                  146 33 Tullinge
                 </span>
               </li>
             </ul>
