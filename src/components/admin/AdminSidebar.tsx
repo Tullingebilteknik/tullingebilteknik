@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { LayoutDashboard, Wrench, FileText, Users, LogOut, ArrowLeft, CalendarDays } from "lucide-react";
+import { LayoutDashboard, Wrench, FileText, Users, LogOut, ArrowLeft, CalendarDays, BarChart3 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
@@ -11,6 +11,7 @@ const navItems = [
   { href: "/admin", label: "Dashboard", icon: LayoutDashboard },
   { href: "/admin/schema", label: "Schema", icon: CalendarDays },
   { href: "/admin/leads", label: "Leads", icon: Users },
+  { href: "/admin/leads/statistik", label: "Statistik", icon: BarChart3 },
   { href: "/admin/tjanster", label: "Tjänster", icon: Wrench },
   { href: "/admin/artiklar", label: "Artiklar", icon: FileText },
 ];
