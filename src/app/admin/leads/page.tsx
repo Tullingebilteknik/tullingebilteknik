@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useCallback } from "react";
 import { createClient } from "@/lib/supabase/client";
-import type { Lead, Mechanic } from "@/lib/types";
+import type { Lead, Mechanic, ContactAttempt } from "@/lib/types";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -29,29 +29,59 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { BookingDialog } from "@/components/admin/BookingDialog";
-import { Phone, Mail, MessageSquare, AlertCircle, CalendarPlus, Search } from "lucide-react";
+import {
+  Phone,
+  Mail,
+  MessageSquare,
+  AlertCircle,
+  CalendarPlus,
+  Search,
+  PhoneCall,
+  MessageCircle,
+  Send,
+  Clock,
+  DollarSign,
+  ChevronRight,
+  X,
+} from "lucide-react";
+
+/* ── Status config ─────────────────────────────── */
 
 const statusConfig = [
   { value: "all", label: "Alla" },
-  { value: "new", label: "Nya", color: "bg-amber-100 text-amber-800" },
-  { value: "booked", label: "Bokade", color: "bg-blue-100 text-blue-800" },
-  { value: "in_progress", label: "Pågående", color: "bg-purple-100 text-purple-800" },
-  { value: "completed", label: "Klara", color: "bg-green-100 text-green-800" },
+  { value: "ska_kontaktas", label: "Ska kontaktas", color: "bg-amber-100 text-amber-800" },
+  { value: "bokad", label: "Bokade", color: "bg-blue-100 text-blue-800" },
+  { value: "ej_affar", label: "Ej affär", color: "bg-red-100 text-red-700" },
+  { value: "affar", label: "Affär", color: "bg-green-100 text-green-800" },
 ] as const;
 
 const statusLabels: Record<string, string> = {
-  new: "Ny",
-  booked: "Bokad",
-  in_progress: "Pågående",
-  completed: "Klar",
+  ska_kontaktas: "Ska kontaktas",
+  bokad: "Bokad",
+  ej_affar: "Ej affär",
+  affar: "Affär",
 };
 
 const statusColors: Record<string, string> = {
-  new: "bg-amber-100 text-amber-800",
-  booked: "bg-blue-100 text-blue-800",
-  in_progress: "bg-purple-100 text-purple-800",
-  completed: "bg-green-100 text-green-800",
+  ska_kontaktas: "bg-amber-100 text-amber-800",
+  bokad: "bg-blue-100 text-blue-800",
+  ej_affar: "bg-red-100 text-red-700",
+  affar: "bg-green-100 text-green-800",
 };
+
+const methodLabels: Record<string, string> = {
+  phone: "Samtal",
+  sms: "SMS",
+  email: "E-post",
+};
+
+const methodIcons: Record<string, typeof PhoneCall> = {
+  phone: PhoneCall,
+  sms: MessageCircle,
+  email: Send,
+};
+
+/* ── Date helpers ──────────────────────────────── */
 
 const monthNames = [
   "Januari", "Februari", "Mars", "April", "Maj", "Juni",
@@ -68,38 +98,90 @@ function getMonthLabel(key: string) {
   return `${monthNames[parseInt(month)]} ${year}`;
 }
 
+function timeAgo(dateStr: string): string {
+  const diff = Date.now() - new Date(dateStr).getTime();
+  const mins = Math.floor(diff / 60000);
+  if (mins < 60) return `${mins}m sedan`;
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return `${hours}h sedan`;
+  const days = Math.floor(hours / 24);
+  return `${days}d sedan`;
+}
+
+/* ── Contact attempt summary per lead ──────────── */
+
+function ContactSummary({ attempts }: { attempts: ContactAttempt[] }) {
+  if (attempts.length === 0) return <span className="text-slate-300">—</span>;
+
+  const counts: Record<string, number> = {};
+  for (const a of attempts) {
+    counts[a.method] = (counts[a.method] || 0) + 1;
+  }
+
+  return (
+    <div className="flex items-center gap-1.5">
+      {Object.entries(counts).map(([method, count]) => {
+        const Icon = methodIcons[method] || PhoneCall;
+        return (
+          <span key={method} className="inline-flex items-center gap-0.5 text-xs text-slate-500" title={methodLabels[method]}>
+            <Icon className="h-3 w-3" />{count}
+          </span>
+        );
+      })}
+    </div>
+  );
+}
+
+/* ── Main page ─────────────────────────────────── */
+
 export default function AdminLeadsPage() {
   const [leads, setLeads] = useState<Lead[]>([]);
   const [filter, setFilter] = useState("all");
   const [search, setSearch] = useState("");
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
   const [notes, setNotes] = useState("");
+  const [dealValue, setDealValue] = useState("");
   const [bookingLead, setBookingLead] = useState<Lead | null>(null);
   const [mechanics, setMechanics] = useState<Mechanic[]>([]);
+  const [attempts, setAttempts] = useState<Record<string, ContactAttempt[]>>({});
+  const [attemptNote, setAttemptNote] = useState("");
+  const [showAttemptForm, setShowAttemptForm] = useState(false);
   const supabase = createClient();
 
-  useEffect(() => {
-    loadLeads();
-    loadMechanics();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  async function loadLeads() {
+  const loadLeads = useCallback(async () => {
     const { data } = await supabase
       .from("leads")
       .select("*")
       .order("created_at", { ascending: false });
     if (data) setLeads(data);
-  }
+  }, [supabase]);
 
-  async function loadMechanics() {
+  const loadAttempts = useCallback(async () => {
     const { data } = await supabase
+      .from("lead_contact_attempts")
+      .select("*")
+      .order("created_at", { ascending: false });
+    if (data) {
+      const map: Record<string, ContactAttempt[]> = {};
+      for (const a of data) {
+        if (!map[a.lead_id]) map[a.lead_id] = [];
+        map[a.lead_id].push(a);
+      }
+      setAttempts(map);
+    }
+  }, [supabase]);
+
+  useEffect(() => {
+    loadLeads();
+    loadAttempts();
+    supabase
       .from("mechanics")
       .select("*")
       .eq("is_active", true)
-      .order("name");
-    if (data) setMechanics(data);
-  }
+      .order("name")
+      .then(({ data }) => { if (data) setMechanics(data); });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   async function updateStatus(id: string, status: string) {
     const { error } = await supabase.from("leads").update({ status }).eq("id", id);
@@ -121,14 +203,48 @@ export default function AdminLeadsPage() {
     );
   }
 
-  // Filter + search
+  async function saveDealValue() {
+    if (!selectedLead) return;
+    const val = dealValue.trim() ? parseInt(dealValue) : null;
+    await supabase.from("leads").update({ deal_value: val }).eq("id", selectedLead.id);
+    setLeads((prev) =>
+      prev.map((l) => (l.id === selectedLead.id ? { ...l, deal_value: val } : l))
+    );
+    setSelectedLead((prev) => (prev ? { ...prev, deal_value: val } : null));
+  }
+
+  async function logContactAttempt(method: "phone" | "sms" | "email") {
+    if (!selectedLead) return;
+    const { data } = await supabase
+      .from("lead_contact_attempts")
+      .insert({ lead_id: selectedLead.id, method, note: attemptNote.trim() || null })
+      .select()
+      .single();
+    if (data) {
+      setAttempts((prev) => ({
+        ...prev,
+        [selectedLead.id]: [data, ...(prev[selectedLead.id] || [])],
+      }));
+    }
+    setAttemptNote("");
+    setShowAttemptForm(false);
+  }
+
+  function openLead(lead: Lead) {
+    setSelectedLead(lead);
+    setNotes(lead.notes || "");
+    setDealValue(lead.deal_value?.toString() || "");
+    setShowAttemptForm(false);
+    setAttemptNote("");
+  }
+
+  /* ── Filtering ─────────────────────────────── */
+
   const filteredLeads = useMemo(() => {
     let result = leads;
-
     if (filter !== "all") {
       result = result.filter((l) => l.status === filter);
     }
-
     if (search.trim()) {
       const q = search.toLowerCase();
       result = result.filter((l) =>
@@ -141,29 +257,23 @@ export default function AdminLeadsPage() {
         l.service_interest?.toLowerCase().includes(q)
       );
     }
-
     return result;
   }, [leads, filter, search]);
 
-  // Group by month
   const groupedLeads = useMemo(() => {
     const groups: { key: string; label: string; leads: Lead[] }[] = [];
     const map = new Map<string, Lead[]>();
-
     for (const lead of filteredLeads) {
       const key = getMonthKey(lead.created_at);
       if (!map.has(key)) map.set(key, []);
       map.get(key)!.push(lead);
     }
-
     for (const [key, groupLeads] of map) {
       groups.push({ key, label: getMonthLabel(key), leads: groupLeads });
     }
-
     return groups;
   }, [filteredLeads]);
 
-  // Status counts
   const statusCounts = useMemo(() => {
     const counts: Record<string, number> = { all: leads.length };
     for (const l of leads) {
@@ -171,6 +281,10 @@ export default function AdminLeadsPage() {
     }
     return counts;
   }, [leads]);
+
+  const leadAttempts = selectedLead ? (attempts[selectedLead.id] || []) : [];
+
+  /* ── Render ────────────────────────────────── */
 
   return (
     <div>
@@ -225,7 +339,8 @@ export default function AdminLeadsPage() {
               <span className="ml-2 text-slate-400 font-normal">({group.leads.length})</span>
             </h2>
 
-            <div className="rounded-xl border bg-white overflow-hidden">
+            {/* Desktop table */}
+            <div className="hidden md:block rounded-xl border bg-white overflow-hidden">
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -233,10 +348,10 @@ export default function AdminLeadsPage() {
                     <TableHead>Fordon</TableHead>
                     <TableHead>Kontakt</TableHead>
                     <TableHead>Tjänst</TableHead>
-                    <TableHead>Tid</TableHead>
+                    <TableHead>Kontaktförsök</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead>Datum</TableHead>
-                    <TableHead className="w-24"></TableHead>
+                    <TableHead className="w-20"></TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -244,13 +359,20 @@ export default function AdminLeadsPage() {
                     <TableRow
                       key={lead.id}
                       className="cursor-pointer hover:bg-slate-50"
-                      onClick={() => {
-                        setSelectedLead(lead);
-                        setNotes(lead.notes || "");
-                      }}
+                      onClick={() => openLead(lead)}
                     >
-                      <TableCell className={`font-medium ${lead.preferred_time === "Snarast" ? "font-bold" : ""}`}>
-                        {lead.name}
+                      <TableCell className="font-medium">
+                        <div>
+                          {lead.name}
+                          {lead.deal_value && (
+                            <span className="ml-2 text-xs text-green-700 font-mono">{lead.deal_value.toLocaleString("sv-SE")} kr</span>
+                          )}
+                        </div>
+                        {lead.preferred_time === "Snarast" && (
+                          <span className="inline-flex items-center gap-0.5 text-xs text-red-600 font-semibold">
+                            <AlertCircle className="h-3 w-3" /> Snarast
+                          </span>
+                        )}
                       </TableCell>
                       <TableCell className="text-sm text-slate-500">
                         {lead.reg_number || lead.car_model ? (
@@ -268,25 +390,19 @@ export default function AdminLeadsPage() {
                             </a>
                           )}
                           {lead.email && (
-                            <a href={`mailto:${lead.email}`} className="flex items-center gap-1 text-slate-600 hover:text-slate-900" onClick={(e) => e.stopPropagation()}>
+                            <a href={`mailto:${lead.email}`} className="flex items-center gap-1 text-slate-600 hover:text-slate-900 truncate max-w-[180px]" onClick={(e) => e.stopPropagation()}>
                               <Mail className="h-3 w-3" /> {lead.email}
                             </a>
                           )}
                         </div>
                       </TableCell>
-                      <TableCell className="text-sm text-slate-500">
+                      <TableCell className="text-sm text-slate-500 max-w-[160px] truncate">
                         {lead.selected_services?.length
                           ? lead.selected_services.join(", ")
                           : lead.service_interest || "—"}
                       </TableCell>
-                      <TableCell className="text-sm">
-                        {lead.preferred_time === "Snarast" ? (
-                          <span className="inline-flex items-center gap-1 text-red-600 font-semibold">
-                            <AlertCircle className="h-3.5 w-3.5" /> Snarast
-                          </span>
-                        ) : lead.preferred_time ? (
-                          <span className="text-slate-500">{lead.preferred_time}</span>
-                        ) : "—"}
+                      <TableCell>
+                        <ContactSummary attempts={attempts[lead.id] || []} />
                       </TableCell>
                       <TableCell>
                         <Select
@@ -294,16 +410,16 @@ export default function AdminLeadsPage() {
                           onValueChange={(val) => updateStatus(lead.id, val)}
                         >
                           <SelectTrigger
-                            className={`w-32 h-8 ${statusColors[lead.status]} border-0 font-medium text-xs`}
+                            className={`w-36 h-8 ${statusColors[lead.status]} border-0 font-medium text-xs`}
                             onClick={(e) => e.stopPropagation()}
                           >
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="new">Ny</SelectItem>
-                            <SelectItem value="booked">Bokad</SelectItem>
-                            <SelectItem value="in_progress">Pågående</SelectItem>
-                            <SelectItem value="completed">Klar</SelectItem>
+                            <SelectItem value="ska_kontaktas">Ska kontaktas</SelectItem>
+                            <SelectItem value="bokad">Bokad</SelectItem>
+                            <SelectItem value="ej_affar">Ej affär</SelectItem>
+                            <SelectItem value="affar">Affär</SelectItem>
                           </SelectContent>
                         </Select>
                       </TableCell>
@@ -312,7 +428,7 @@ export default function AdminLeadsPage() {
                       </TableCell>
                       <TableCell>
                         <div className="flex gap-1">
-                          {lead.status === "new" && (
+                          {lead.status === "ska_kontaktas" && (
                             <Button
                               variant="ghost"
                               size="icon"
@@ -331,8 +447,7 @@ export default function AdminLeadsPage() {
                             size="icon"
                             onClick={(e) => {
                               e.stopPropagation();
-                              setSelectedLead(lead);
-                              setNotes(lead.notes || "");
+                              openLead(lead);
                             }}
                           >
                             <MessageSquare className="h-4 w-4" />
@@ -344,45 +459,108 @@ export default function AdminLeadsPage() {
                 </TableBody>
               </Table>
             </div>
+
+            {/* Mobile card list */}
+            <div className="md:hidden space-y-2">
+              {group.leads.map((lead) => (
+                <button
+                  key={lead.id}
+                  onClick={() => openLead(lead)}
+                  className="w-full text-left rounded-xl border bg-white p-4 active:bg-slate-50 transition-colors"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="font-semibold text-slate-900 truncate">{lead.name}</span>
+                        {lead.preferred_time === "Snarast" && (
+                          <AlertCircle className="h-3.5 w-3.5 text-red-500 shrink-0" />
+                        )}
+                      </div>
+                      <div className="flex items-center gap-2 text-xs text-slate-500 mb-2">
+                        {lead.reg_number && <span className="font-mono">{lead.reg_number}</span>}
+                        {lead.car_model && <span>{lead.car_model}</span>}
+                      </div>
+                      <p className="text-xs text-slate-500 truncate">
+                        {lead.selected_services?.length
+                          ? lead.selected_services.join(", ")
+                          : lead.service_interest || "—"}
+                      </p>
+                    </div>
+                    <div className="flex flex-col items-end gap-2 shrink-0">
+                      <Badge className={`${statusColors[lead.status]} border-0 text-[10px] whitespace-nowrap`}>
+                        {statusLabels[lead.status]}
+                      </Badge>
+                      <div className="flex items-center gap-2">
+                        <ContactSummary attempts={attempts[lead.id] || []} />
+                        {lead.deal_value && (
+                          <span className="text-[10px] text-green-700 font-mono">{lead.deal_value.toLocaleString("sv-SE")} kr</span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-between mt-3 pt-3 border-t border-slate-100">
+                    <div className="flex items-center gap-3 text-xs text-slate-400">
+                      {lead.phone && (
+                        <a href={`tel:${lead.phone}`} className="flex items-center gap-1 hover:text-slate-700" onClick={(e) => e.stopPropagation()}>
+                          <Phone className="h-3 w-3" /> {lead.phone}
+                        </a>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-1 text-xs text-slate-400">
+                      {new Date(lead.created_at).toLocaleDateString("sv-SE")}
+                      <ChevronRight className="h-3.5 w-3.5" />
+                    </div>
+                  </div>
+                </button>
+              ))}
+            </div>
           </div>
         ))
       )}
 
-      {/* Lead Detail Dialog */}
+      {/* ── Lead Detail Dialog ──────────────── */}
       <Dialog open={!!selectedLead} onOpenChange={(open) => !open && setSelectedLead(null)}>
-        <DialogContent className="sm:max-w-lg">
+        <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>{selectedLead?.name}</DialogTitle>
+            <DialogTitle className="flex items-center gap-3">
+              {selectedLead?.name}
+              {selectedLead && (
+                <Badge className={`${statusColors[selectedLead.status]} border-0 text-xs`}>
+                  {statusLabels[selectedLead.status]}
+                </Badge>
+              )}
+            </DialogTitle>
           </DialogHeader>
           {selectedLead && (
-            <div className="space-y-4">
+            <div className="space-y-5">
+              {/* Contact info */}
               <div className="grid grid-cols-2 gap-4 text-sm">
                 <div>
-                  <p className="text-slate-500">Telefon</p>
-                  <a href={`tel:${selectedLead.phone}`} className="font-medium hover:text-amber-600">
-                    {selectedLead.phone}
+                  <p className="text-slate-500 text-xs mb-0.5">Telefon</p>
+                  <a href={`tel:${selectedLead.phone}`} className="font-medium hover:text-blue-600">
+                    {selectedLead.phone || "—"}
                   </a>
                 </div>
                 <div>
-                  <p className="text-slate-500">E-post</p>
-                  <a href={`mailto:${selectedLead.email}`} className="font-medium hover:text-amber-600">
+                  <p className="text-slate-500 text-xs mb-0.5">E-post</p>
+                  <a href={`mailto:${selectedLead.email}`} className="font-medium hover:text-blue-600 break-all">
                     {selectedLead.email || "—"}
                   </a>
                 </div>
                 {selectedLead.reg_number && (
                   <div>
-                    <p className="text-slate-500">Registreringsnummer</p>
+                    <p className="text-slate-500 text-xs mb-0.5">Reg.nr</p>
                     <p className="font-mono font-semibold">{selectedLead.reg_number}</p>
                   </div>
                 )}
                 {selectedLead.car_model && (
                   <div>
-                    <p className="text-slate-500">Bil</p>
+                    <p className="text-slate-500 text-xs mb-0.5">Bil</p>
                     <p className="font-medium">{selectedLead.car_model}</p>
                   </div>
                 )}
-                <div>
-                  <p className="text-slate-500">Tjänster</p>
+                <div className="col-span-2">
+                  <p className="text-slate-500 text-xs mb-0.5">Tjänster</p>
                   {selectedLead.selected_services?.length ? (
                     <div className="flex flex-wrap gap-1 mt-1">
                       {selectedLead.selected_services.map((s) => (
@@ -393,29 +571,161 @@ export default function AdminLeadsPage() {
                     <p className="font-medium">{selectedLead.service_interest || "—"}</p>
                   )}
                 </div>
+                {selectedLead.preferred_time && (
+                  <div>
+                    <p className="text-slate-500 text-xs mb-0.5">Önskad tid</p>
+                    {selectedLead.preferred_time === "Snarast" ? (
+                      <p className="font-semibold text-red-600 flex items-center gap-1">
+                        <AlertCircle className="h-3.5 w-3.5" /> Snarast
+                      </p>
+                    ) : (
+                      <p className="font-medium">{selectedLead.preferred_time}</p>
+                    )}
+                  </div>
+                )}
                 <div>
-                  <p className="text-slate-500">Önskad tid</p>
-                  {selectedLead.preferred_time === "Snarast" ? (
-                    <p className="font-semibold text-red-600 flex items-center gap-1">
-                      <AlertCircle className="h-3.5 w-3.5" /> Snarast
-                    </p>
-                  ) : (
-                    <p className="font-medium">{selectedLead.preferred_time || "—"}</p>
+                  <p className="text-slate-500 text-xs mb-0.5">Källa</p>
+                  <p className="font-medium">{selectedLead.source_page || "—"}</p>
+                </div>
+              </div>
+
+              {/* Message */}
+              {selectedLead.message && (
+                <div>
+                  <p className="text-xs text-slate-500 mb-1">Meddelande</p>
+                  <p className="text-sm bg-slate-50 rounded-lg p-3">{selectedLead.message}</p>
+                </div>
+              )}
+
+              {/* Status + Deal value */}
+              <div className="flex flex-col sm:flex-row gap-3">
+                <div className="flex-1">
+                  <p className="text-xs text-slate-500 mb-1">Status</p>
+                  <Select
+                    value={selectedLead.status}
+                    onValueChange={(val) => updateStatus(selectedLead.id, val)}
+                  >
+                    <SelectTrigger className="w-full h-9">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="ska_kontaktas">Ska kontaktas</SelectItem>
+                      <SelectItem value="bokad">Bokad</SelectItem>
+                      <SelectItem value="ej_affar">Ej affär</SelectItem>
+                      <SelectItem value="affar">Affär</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="flex-1">
+                  <p className="text-xs text-slate-500 mb-1">Värde (kr)</p>
+                  <div className="flex gap-2">
+                    <Input
+                      type="number"
+                      placeholder="0"
+                      value={dealValue}
+                      onChange={(e) => setDealValue(e.target.value)}
+                      className="h-9"
+                    />
+                    <Button size="sm" variant="outline" className="h-9 shrink-0" onClick={saveDealValue}>
+                      Spara
+                    </Button>
+                  </div>
+                </div>
+              </div>
+
+              {/* ── Contact Attempts ─────────── */}
+              <div className="border-t pt-4">
+                <div className="flex items-center justify-between mb-3">
+                  <p className="text-sm font-semibold text-slate-700">
+                    Kontaktförsök
+                    {leadAttempts.length > 0 && (
+                      <span className="ml-1.5 text-slate-400 font-normal">({leadAttempts.length})</span>
+                    )}
+                  </p>
+                  {!showAttemptForm && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="h-7 text-xs"
+                      onClick={() => setShowAttemptForm(true)}
+                    >
+                      + Registrera
+                    </Button>
                   )}
                 </div>
-                <div>
-                  <p className="text-slate-500">Källa</p>
-                  <p className="font-medium">{selectedLead.source_page}</p>
-                </div>
+
+                {showAttemptForm && (
+                  <div className="bg-slate-50 rounded-lg p-3 mb-3 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <p className="text-xs font-medium text-slate-600">Registrera kontaktförsök</p>
+                      <button onClick={() => setShowAttemptForm(false)} className="text-slate-400 hover:text-slate-600">
+                        <X className="h-4 w-4" />
+                      </button>
+                    </div>
+                    <Input
+                      placeholder="Anteckning (valfritt)..."
+                      value={attemptNote}
+                      onChange={(e) => setAttemptNote(e.target.value)}
+                      className="h-8 text-sm bg-white"
+                    />
+                    <div className="flex gap-2">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="flex-1 h-9 gap-1.5 text-xs"
+                        onClick={() => logContactAttempt("phone")}
+                      >
+                        <PhoneCall className="h-3.5 w-3.5" /> Samtal
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="flex-1 h-9 gap-1.5 text-xs"
+                        onClick={() => logContactAttempt("sms")}
+                      >
+                        <MessageCircle className="h-3.5 w-3.5" /> SMS
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="flex-1 h-9 gap-1.5 text-xs"
+                        onClick={() => logContactAttempt("email")}
+                      >
+                        <Send className="h-3.5 w-3.5" /> E-post
+                      </Button>
+                    </div>
+                  </div>
+                )}
+
+                {/* Attempt timeline */}
+                {leadAttempts.length > 0 ? (
+                  <div className="space-y-2 max-h-48 overflow-y-auto">
+                    {leadAttempts.map((a) => {
+                      const Icon = methodIcons[a.method] || PhoneCall;
+                      return (
+                        <div key={a.id} className="flex items-start gap-2.5 text-sm">
+                          <div className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-slate-100">
+                            <Icon className="h-3 w-3 text-slate-500" />
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-center gap-2">
+                              <span className="font-medium text-xs text-slate-700">{methodLabels[a.method]}</span>
+                              <span className="text-[11px] text-slate-400">{timeAgo(a.created_at)}</span>
+                            </div>
+                            {a.note && <p className="text-xs text-slate-500 mt-0.5">{a.note}</p>}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <p className="text-xs text-slate-400">Inga kontaktförsök ännu.</p>
+                )}
               </div>
 
-              <div>
-                <p className="text-sm text-slate-500 mb-1">Meddelande</p>
-                <p className="text-sm bg-slate-50 rounded-lg p-3">{selectedLead.message}</p>
-              </div>
-
-              <div>
-                <p className="text-sm text-slate-500 mb-1">Interna anteckningar</p>
+              {/* Internal notes */}
+              <div className="border-t pt-4">
+                <p className="text-xs text-slate-500 mb-1">Interna anteckningar</p>
                 <Textarea
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
@@ -426,7 +736,7 @@ export default function AdminLeadsPage() {
                   <Button size="sm" onClick={saveNotes}>
                     Spara anteckningar
                   </Button>
-                  {selectedLead.status === "new" && (
+                  {selectedLead.status === "ska_kontaktas" && (
                     <Button
                       size="sm"
                       variant="outline"

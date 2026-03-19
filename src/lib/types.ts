@@ -31,7 +31,7 @@ export interface Lead {
   phone: string;
   service_interest: string | null;
   message: string;
-  status: "new" | "booked" | "in_progress" | "completed";
+  status: "ska_kontaktas" | "bokad" | "ej_affar" | "affar";
   notes: string | null;
   source_page: string;
   created_at: string;
@@ -39,6 +39,15 @@ export interface Lead {
   car_model: string | null;
   selected_services: string[] | null;
   preferred_time: string | null;
+  deal_value: number | null;
+}
+
+export interface ContactAttempt {
+  id: string;
+  lead_id: string;
+  method: "phone" | "sms" | "email";
+  note: string | null;
+  created_at: string;
 }
 
 export interface Mechanic {

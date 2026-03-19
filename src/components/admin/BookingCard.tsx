@@ -3,10 +3,10 @@
 import type { BookingWithDetails } from "@/lib/types";
 
 const statusColors: Record<string, string> = {
-  new: "bg-amber-100 border-amber-300 text-amber-900",
-  booked: "bg-blue-50 border-blue-300 text-blue-900",
-  in_progress: "bg-purple-50 border-purple-300 text-purple-900",
-  completed: "bg-green-50 border-green-300 text-green-900",
+  ska_kontaktas: "bg-amber-100 border-amber-300 text-amber-900",
+  bokad: "bg-blue-50 border-blue-300 text-blue-900",
+  ej_affar: "bg-red-50 border-red-300 text-red-900",
+  affar: "bg-green-50 border-green-300 text-green-900",
 };
 
 interface BookingCardProps {
@@ -16,8 +16,8 @@ interface BookingCardProps {
 }
 
 export function BookingCard({ booking, onClick, style }: BookingCardProps) {
-  const leadStatus = booking.lead.status || "booked";
-  const colorClass = statusColors[leadStatus] || statusColors.booked;
+  const leadStatus = booking.lead.status || "bokad";
+  const colorClass = statusColors[leadStatus] || statusColors.bokad;
   const orderNum = booking.order_number
     ? `#${String(booking.order_number).padStart(4, "0")}`
     : "";

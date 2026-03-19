@@ -22,7 +22,7 @@ export default async function AdminDashboard() {
     supabase
       .from("leads")
       .select("*", { count: "exact", head: true })
-      .eq("status", "new"),
+      .eq("status", "ska_kontaktas"),
     supabase
       .from("articles")
       .select("*", { count: "exact", head: true })
@@ -38,7 +38,7 @@ export default async function AdminDashboard() {
     supabase
       .from("leads")
       .select("*", { count: "exact", head: true })
-      .eq("status", "in_progress"),
+      .in("status", ["bokad", "affar"]),
   ]);
 
   const stats = [

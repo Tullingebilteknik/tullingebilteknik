@@ -67,7 +67,7 @@ export function BookingDialog({
   const [startTime, setStartTime] = useState("08:00");
   const [endTime, setEndTime] = useState("09:00");
   const [notes, setNotes] = useState("");
-  const [status, setStatus] = useState("booked");
+  const [status, setStatus] = useState("bokad");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [leads, setLeads] = useState<Lead[]>([]);
@@ -88,7 +88,7 @@ export function BookingDialog({
       setStartTime(booking.start_time.slice(0, 5));
       setEndTime(booking.end_time.slice(0, 5));
       setNotes(booking.notes || "");
-      setStatus(booking.lead.status || "booked");
+      setStatus(booking.lead.status || "bokad");
       setSelectedLeadId(booking.lead_id);
     } else {
       const d = defaultDate || new Date().toISOString().split("T")[0];
@@ -98,7 +98,7 @@ export function BookingDialog({
       setStartTime(defaultTime || "08:00");
       setEndTime(defaultTime ? nextSlot(defaultTime) : "09:00");
       setNotes("");
-      setStatus("booked");
+      setStatus("bokad");
       setSelectedLeadId(lead?.id || "");
     }
 
@@ -137,7 +137,7 @@ export function BookingDialog({
     const { data } = await supabase
       .from("leads")
       .select("*")
-      .eq("status", "new")
+      .eq("status", "ska_kontaktas")
       .order("created_at", { ascending: false });
     if (data) setLeads(data);
   }
@@ -205,7 +205,7 @@ export function BookingDialog({
 
       await supabase
         .from("leads")
-        .update({ status: "booked" })
+        .update({ status: "bokad" })
         .eq("id", leadId);
     }
 
@@ -221,7 +221,7 @@ export function BookingDialog({
     await supabase.from("bookings").delete().eq("id", booking.id);
     await supabase
       .from("leads")
-      .update({ status: "new" })
+      .update({ status: "ska_kontaktas" })
       .eq("id", booking.lead_id);
 
     setSaving(false);
@@ -330,9 +330,10 @@ export function BookingDialog({
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="booked">Bokad</SelectItem>
-                  <SelectItem value="in_progress">Pågående</SelectItem>
-                  <SelectItem value="completed">Färdigställd</SelectItem>
+                  <SelectItem value="ska_kontaktas">Ska kontaktas</SelectItem>
+                  <SelectItem value="bokad">Bokad</SelectItem>
+                  <SelectItem value="ej_affar">Ej affär</SelectItem>
+                  <SelectItem value="affar">Affär</SelectItem>
                 </SelectContent>
               </Select>
             </div>
