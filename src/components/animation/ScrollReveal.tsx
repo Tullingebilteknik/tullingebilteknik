@@ -27,6 +27,7 @@ export function ScrollReveal({
     if (!ref.current) return;
 
     const targets = stagger > 0 ? Array.from(ref.current.children) : ref.current;
+    if (Array.isArray(targets) && targets.length === 0) return;
 
     const from: gsap.TweenVars = {
       opacity: 0,

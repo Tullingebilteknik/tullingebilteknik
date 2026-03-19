@@ -50,7 +50,12 @@ export function ServiceGrid({ services }: ServiceGridProps) {
     const el = sectionRef.current;
     if (!el) return;
     const observer = new IntersectionObserver(
-      ([entry]) => { if (entry.isIntersecting) { setCanvasVisible(true); observer.disconnect(); } },
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setCanvasVisible(true);
+          observer.disconnect();
+        }
+      },
       { rootMargin: "200px" }
     );
     observer.observe(el);
@@ -63,7 +68,7 @@ export function ServiceGrid({ services }: ServiceGridProps) {
       <div className="h-32 bg-gradient-to-b from-[oklch(0.12_0.005_260)] via-[oklch(0.55_0.003_260)] to-white" />
 
       <section ref={sectionRef} id="tjanster" className="py-12 sm:py-20 bg-white tech-surface relative overflow-hidden">
-        {/* Full-section 3D Volvo background — desktop only, lazy-loaded */}
+        {/* Full-section 3D background — desktop only, lazy-loaded */}
         {canvasVisible && (
           <div className="hidden lg:block absolute inset-0 z-0 pointer-events-none">
             <Suspense fallback={null}>
@@ -111,13 +116,9 @@ export function ServiceGrid({ services }: ServiceGridProps) {
                       Boka service &rarr;
                     </span>
                   </div>
-                  <a
-                    href="#boka"
-                    onClick={(e) => e.stopPropagation()}
-                    className="ml-auto text-muted-foreground/30 group-hover:text-primary group-hover:translate-x-1 transition-all"
-                  >
+                  <span className="ml-auto text-muted-foreground/30 group-hover:text-primary group-hover:translate-x-1 transition-all">
                     &rarr;
-                  </a>
+                  </span>
                 </Link>
               );
             })}
@@ -141,13 +142,9 @@ export function ServiceGrid({ services }: ServiceGridProps) {
                     <span className="font-mono text-[10px] text-muted-foreground/40">{num}</span>
                     <h3 className="font-heading font-600 text-foreground mb-1">{service.title}</h3>
                     <p className="text-sm text-muted-foreground leading-relaxed mb-2">{service.description}</p>
-                    <a
-                      href="#boka"
-                      onClick={(e) => e.stopPropagation()}
-                      className="text-xs font-500 text-primary hover:text-primary/80 transition-colors"
-                    >
+                    <span className="text-xs font-500 text-primary group-hover:text-primary/80 transition-colors">
                       Boka &rarr;
-                    </a>
+                    </span>
                   </div>
                 </Link>
               );
