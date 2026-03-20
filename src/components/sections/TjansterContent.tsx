@@ -126,14 +126,14 @@ function ServiceCard({
 
             {/* Book CTA (fades in on hover, always visible on mobile when open) */}
             <Link
-              href={`/?service=${encodeURIComponent(service.slug)}#boka`}
+              href={service.landing_content ? `/tjanster/${service.slug}` : `/?service=${encodeURIComponent(service.slug)}#boka`}
               className={`inline-flex items-center gap-1.5 mt-3 text-sm font-500 transition-all duration-300 ${
                 open
                   ? "text-primary"
                   : "text-primary/0 group-hover:text-primary"
               }`}
             >
-              Boka tjänst
+              {service.landing_content ? "Läs mer" : "Boka tjänst"}
               <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
             </Link>
           </div>
@@ -182,7 +182,7 @@ function WashCard({
         </p>
 
         <Link
-          href={`/?service=${encodeURIComponent(service.slug)}#boka`}
+          href={service.landing_content ? `/tjanster/${service.slug}` : `/?service=${encodeURIComponent(service.slug)}#boka`}
           className="inline-flex items-center gap-1.5 text-sm font-500 text-primary/60 group-hover:text-primary transition-colors duration-300"
         >
           Boka tvätt

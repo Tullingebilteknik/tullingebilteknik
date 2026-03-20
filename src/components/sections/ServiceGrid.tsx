@@ -99,7 +99,7 @@ export function ServiceGrid({ services }: ServiceGridProps) {
               return (
                 <Link
                   key={service.id}
-                  href={`/tjanster#${service.slug}`}
+                  href={service.landing_content ? `/tjanster/${service.slug}` : `/tjanster#${service.slug}`}
                   onMouseEnter={() => setHoveredIndex(index)}
                   onMouseLeave={() => setHoveredIndex(null)}
                   className="group flex items-center gap-6 py-5 border-b border-border/50 transition-colors hover:border-primary/30"
@@ -132,7 +132,7 @@ export function ServiceGrid({ services }: ServiceGridProps) {
               return (
                 <Link
                   key={service.id}
-                  href={`/tjanster#${service.slug}`}
+                  href={service.landing_content ? `/tjanster/${service.slug}` : `/tjanster#${service.slug}`}
                   className="group premium-card rounded-lg p-5 flex items-start gap-4"
                 >
                   <div className="w-10 h-10 rounded-lg bg-primary/5 border border-primary/10 flex items-center justify-center shrink-0">

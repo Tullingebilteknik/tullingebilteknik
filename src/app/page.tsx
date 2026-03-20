@@ -55,8 +55,8 @@ export default async function HomePage() {
             },
             geo: {
               "@type": "GeoCoordinates",
-              latitude: 59.2,
-              longitude: 17.9,
+              latitude: 59.2006,
+              longitude: 17.9088,
             },
             openingHoursSpecification: [
               {
@@ -71,6 +71,16 @@ export default async function HomePage() {
               { "@type": "City", name: "Tullinge" },
               { "@type": "City", name: "Tumba" },
               { "@type": "City", name: "Huddinge" },
+              { "@type": "City", name: "Salem" },
+              { "@type": "City", name: "Botkyrka" },
+              { "@type": "City", name: "Flemingsberg" },
+              { "@type": "City", name: "Segeltorp" },
+              { "@type": "City", name: "Skogås" },
+              { "@type": "City", name: "Trångsund" },
+              { "@type": "City", name: "Vårby" },
+              { "@type": "City", name: "Kungens Kurva" },
+              { "@type": "City", name: "Rönninge" },
+              { "@type": "City", name: "Södertälje" },
             ],
           }),
         }}

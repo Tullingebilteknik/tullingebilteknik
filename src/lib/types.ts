@@ -10,6 +10,10 @@ export interface Service {
   category: "verkstad" | "tvatt_rekond";
   price: string | null;
   is_addon: boolean;
+  landing_content: string;
+  landing_meta_desc: string;
+  landing_hero_image: string | null;
+  landing_faq: { question: string; answer: string }[];
   created_at: string;
   updated_at: string;
 }

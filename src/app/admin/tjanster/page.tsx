@@ -31,7 +31,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Pencil, GripVertical, Wrench, Droplets } from "lucide-react";
+import { Pencil, GripVertical, Wrench, Droplets, FileText } from "lucide-react";
+import Link from "next/link";
 
 const categoryLabels: Record<string, string> = {
   verkstad: "Verkstad",
@@ -161,6 +162,12 @@ export default function AdminServicesPage() {
                         />
                       </TableCell>
                       <TableCell>
+                        <div className="flex items-center gap-1">
+                        <Link href={`/admin/tjanster/${service.id}`}>
+                          <Button variant="ghost" size="icon" title="Redigera landningssida">
+                            <FileText className="h-4 w-4" />
+                          </Button>
+                        </Link>
                         <Dialog
                           open={dialogOpen && editService?.id === service.id}
                           onOpenChange={(open) => {
@@ -250,6 +257,7 @@ export default function AdminServicesPage() {
                             </form>
                           </DialogContent>
                         </Dialog>
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))}
