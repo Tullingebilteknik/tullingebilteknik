@@ -10,5 +10,8 @@ export default function robots(): MetadataRoute.Robots {
       },
     ],
     sitemap: "https://tullingebilteknik.se/sitemap.xml",
+    host: "https://tullingebilteknik.se",
   };
 }
+
+// Note: LLM-friendly content map available at /llms.txt

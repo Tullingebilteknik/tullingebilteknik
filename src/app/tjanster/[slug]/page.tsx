@@ -9,6 +9,7 @@ import { ArrowLeft, Phone, MapPin, Clock, ArrowRight } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import type { Service } from "@/lib/types";
+import { ShareContentBar } from "@/components/ui/ShareContentBar";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 3600;
@@ -142,6 +143,20 @@ export default async function ServiceLandingPage({ params }: Props) {
   const hasLanding = !!(service.landing_content && service.landing_content.trim());
   const faq = (service.landing_faq || []) as { question: string; answer: string }[];
 
+  // Build full markdown for share/copy
+  const markdownParts = [`# ${service.title} i Tullinge`, "", service.description, ""];
+  if (hasLanding) {
+    markdownParts.push("---", "", service.landing_content, "");
+  }
+  if (faq.length > 0) {
+    markdownParts.push("## Vanliga frågor", "");
+    for (const item of faq) {
+      markdownParts.push(`### ${item.question}`, "", item.answer, "");
+    }
+  }
+  markdownParts.push("---", "", "Tullinge Bilteknik | Mekanikervägen 3, 146 33 Tullinge | 08-778 60 50 | info@tullingebilteknik.se");
+  const fullMarkdown = markdownParts.join("\n");
+
   return (
     <>
       <ServiceSchema service={service} />
@@ -209,6 +224,9 @@ export default async function ServiceLandingPage({ params }: Props) {
         {/* Content */}
         <section className="py-16 sm:py-24 bg-white">
           <div className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8">
+            {hasLanding && (
+              <ShareContentBar markdown={fullMarkdown} pageUrl={`/tjanster/${slug}`} />
+            )}
             {hasLanding ? (
               <div className="prose prose-lg max-w-none prose-headings:font-heading prose-headings:font-700 prose-a:text-primary prose-img:rounded-xl prose-strong:text-foreground">
                 <ReactMarkdown remarkPlugins={[remarkGfm]}>

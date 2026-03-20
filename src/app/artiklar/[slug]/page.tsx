@@ -9,6 +9,7 @@ import { createClient } from "@/lib/supabase/server";
 import { ArrowLeft } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import { ShareContentBar } from "@/components/ui/ShareContentBar";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 3600;
@@ -51,6 +52,8 @@ export default async function ArticlePage({ params }: Props) {
     .single();
 
   if (!article) notFound();
+
+  const fullMarkdown = [`# ${article.title}`, "", article.content, "", "---", "", "Tullinge Bilteknik | tullingebilteknik.se"].join("\n");
 
   return (
     <>
@@ -96,7 +99,8 @@ export default async function ArticlePage({ params }: Props) {
               {article.title}
             </h1>
 
-            {/* Content */}
+            {/* Share + Content */}
+            <ShareContentBar markdown={fullMarkdown} pageUrl={`/artiklar/${slug}`} />
             <div className="prose prose-lg max-w-none prose-headings:font-heading prose-headings:font-700 prose-a:text-primary prose-img:rounded-xl prose-strong:text-foreground">
               <ReactMarkdown remarkPlugins={[remarkGfm]}>
                 {article.content}
