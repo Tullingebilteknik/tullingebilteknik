@@ -124,18 +124,26 @@ function ServiceCard({
               )}
             </AnimatePresence>
 
-            {/* Book CTA (fades in on hover, always visible on mobile when open) */}
-            <Link
-              href={service.landing_content ? `/tjanster/${service.slug}` : `/?service=${encodeURIComponent(service.slug)}#boka`}
-              className={`inline-flex items-center gap-1.5 mt-3 text-sm font-500 transition-all duration-300 ${
-                open
-                  ? "text-primary"
-                  : "text-primary/0 group-hover:text-primary"
-              }`}
-            >
-              {service.landing_content ? "Läs mer" : "Boka tjänst"}
-              <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
-            </Link>
+            {/* CTAs (fades in on hover, always visible on mobile when open) */}
+            <div className={`flex items-center gap-4 mt-3 transition-all duration-300 ${
+              open ? "opacity-100" : "opacity-0 group-hover:opacity-100"
+            }`}>
+              {service.landing_content && (
+                <Link
+                  href={`/tjanster/${service.slug}`}
+                  className="inline-flex items-center gap-1.5 text-sm font-500 text-primary"
+                >
+                  Läs mer
+                  <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
+                </Link>
+              )}
+              <Link
+                href={`/?service=${encodeURIComponent(service.slug)}#boka`}
+                className="inline-flex items-center gap-1.5 text-sm font-500 text-muted-foreground hover:text-primary transition-colors"
+              >
+                Boka tjänst
+              </Link>
+            </div>
           </div>
         </div>
       </div>
@@ -181,13 +189,23 @@ function WashCard({
           {service.long_description}
         </p>
 
-        <Link
-          href={service.landing_content ? `/tjanster/${service.slug}` : `/?service=${encodeURIComponent(service.slug)}#boka`}
-          className="inline-flex items-center gap-1.5 text-sm font-500 text-primary/60 group-hover:text-primary transition-colors duration-300"
-        >
-          Boka tvätt
-          <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
-        </Link>
+        <div className="flex items-center justify-center gap-4">
+          {service.landing_content && (
+            <Link
+              href={`/tjanster/${service.slug}`}
+              className="inline-flex items-center gap-1.5 text-sm font-500 text-primary/60 group-hover:text-primary transition-colors duration-300"
+            >
+              Läs mer
+              <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
+            </Link>
+          )}
+          <Link
+            href={`/?service=${encodeURIComponent(service.slug)}#boka`}
+            className="inline-flex items-center gap-1.5 text-sm font-500 text-muted-foreground/60 group-hover:text-muted-foreground transition-colors duration-300"
+          >
+            Boka tvätt
+          </Link>
+        </div>
       </div>
     </div>
   );
