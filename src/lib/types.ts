@@ -47,6 +47,7 @@ export interface Lead {
   selected_services: string[] | null;
   preferred_time: string | null;
   deal_value: number | null;
+  landing_page: string | null;
 }
 
 export interface ContactAttempt {

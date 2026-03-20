@@ -142,6 +142,7 @@ export function DiagnosticWizard() {
       service_interest: selectedService || null,
       message: parts.join("\n") || "Bokningsförfrågan via diagnostikverktyget",
       source_page: "diagnostic-wizard",
+      landing_page: typeof window !== "undefined" ? sessionStorage.getItem("landing_page") : null,
     });
 
     setLoading(false);

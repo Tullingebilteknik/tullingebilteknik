@@ -96,6 +96,7 @@ create table public.leads (
   preferred_time text,
   notes text,
   source_page text not null default '',
+  landing_page text,
   created_at timestamptz not null default now()
 );
 

@@ -992,6 +992,9 @@ function LeadDetailDialog({
             <div>
               <p className="text-slate-500 text-xs mb-0.5">Källa</p>
               <p className="font-medium">{sourcePageLabel(lead.source_page)}</p>
+              {lead.landing_page && (
+                <p className="text-slate-400 text-xs mt-0.5">Landningssida: {lead.landing_page}</p>
+              )}
             </div>
           </div>
 

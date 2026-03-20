@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Space_Grotesk, Inter, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
+import { LandingPageTracker } from "@/components/tracking/LandingPageTracker";
 
 const spaceGrotesk = Space_Grotesk({
   variable: "--font-heading",
@@ -59,6 +60,7 @@ export default function RootLayout({
   return (
     <html lang="sv">
       <body className={`${spaceGrotesk.variable} ${inter.variable} ${jetbrainsMono.variable} font-sans antialiased`}>
+        <LandingPageTracker />
         {children}
       </body>
     </html>

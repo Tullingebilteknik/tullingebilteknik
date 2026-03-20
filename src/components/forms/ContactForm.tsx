@@ -53,6 +53,7 @@ export function ContactForm({ sourcePage = "unknown", compact = false }: Contact
       service_interest: (formData.get("service_interest") as string) || null,
       message: formData.get("message") as string,
       source_page: sourcePage,
+      landing_page: typeof window !== "undefined" ? sessionStorage.getItem("landing_page") : null,
     };
 
     const supabase = createClient();

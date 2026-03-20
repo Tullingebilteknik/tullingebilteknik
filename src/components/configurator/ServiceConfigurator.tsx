@@ -54,6 +54,7 @@ export function ServiceConfigurator() {
       service_interest: selectedServices.join(", ") || null,
       message: `Reg.nr: ${regNumber.trim()}\nBil: ${carModel.trim()}\nÖnskad tid: ${preferredTime}`,
       source_page: "service-configurator",
+      landing_page: typeof window !== "undefined" ? sessionStorage.getItem("landing_page") : null,
       reg_number: regNumber.trim() || null,
       car_model: carModel.trim() || null,
       selected_services: selectedServices.length > 0 ? selectedServices : null,
