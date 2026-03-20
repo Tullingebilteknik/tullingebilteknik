@@ -16,6 +16,7 @@ export default async function HomePage() {
     .from("services")
     .select("*")
     .eq("is_visible", true)
+    .eq("category", "verkstad")
     .order("sort_order");
 
   return (

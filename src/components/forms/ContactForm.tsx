@@ -3,18 +3,31 @@
 import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 
-const services = [
-  "Service & underhåll",
-  "Bromsar",
-  "Däck & hjul",
-  "AC-service",
-  "Felsökning & diagnostik",
-  "Besiktningsförberedelse",
-  "Oljebyte",
-  "Avgassystem",
-  "Koppling & växellåda",
-  "Elektronik & elsystem",
-  "Övrigt",
+const serviceCategories = [
+  {
+    label: "Verkstad",
+    options: [
+      "Service & underhåll",
+      "Bromsar",
+      "Däck & hjul",
+      "AC-service",
+      "Felsökning & diagnostik",
+      "Besiktningsförberedelse",
+      "Oljebyte",
+      "Avgassystem",
+      "Koppling & växellåda",
+      "Elektronik & elsystem",
+      "Övrigt",
+    ],
+  },
+  {
+    label: "Tvätt & Rekond",
+    options: [
+      "Utvändig tvätt",
+      "Utvändig tvätt med lätt städ",
+      "Utvändig tvätt med invändig städ",
+    ],
+  },
 ];
 
 interface ContactFormProps {
@@ -88,8 +101,12 @@ export function ContactForm({ sourcePage = "unknown", compact = false }: Contact
         <div className="floating-label-group">
           <select id="service_interest" name="service_interest" defaultValue="">
             <option value="" disabled>Välj tjänst (valfritt)</option>
-            {services.map((service) => (
-              <option key={service} value={service}>{service}</option>
+            {serviceCategories.map((cat) => (
+              <optgroup key={cat.label} label={cat.label}>
+                {cat.options.map((service) => (
+                  <option key={service} value={service}>{service}</option>
+                ))}
+              </optgroup>
             ))}
           </select>
           <label htmlFor="service_interest">Tjänst</label>

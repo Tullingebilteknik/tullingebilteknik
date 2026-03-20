@@ -2,6 +2,7 @@
 
 import { motion } from "framer-motion";
 import { serviceOptions } from "./serviceIcons";
+import { Wrench, Droplets } from "lucide-react";
 
 interface StepServicesProps {
   selectedServices: string[];
@@ -14,6 +15,9 @@ const cardVariants = {
   hidden: { opacity: 0, y: 12 },
   visible: { opacity: 1, y: 0 },
 };
+
+const verkstadOptions = serviceOptions.filter((s) => s.category === "verkstad");
+const tvattOptions = serviceOptions.filter((s) => s.category === "tvatt_rekond");
 
 export function StepServices({
   selectedServices,
@@ -29,44 +33,101 @@ export function StepServices({
         Vad behöver bilen hjälp med?
       </h2>
 
-      <motion.div
-        className="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full"
-        initial="hidden"
-        animate="visible"
-        transition={{ staggerChildren: 0.04 }}
-      >
-        {serviceOptions.map(({ label, icon: Icon }) => {
-          const isActive = selectedServices.includes(label);
-          return (
-            <motion.button
-              key={label}
-              variants={cardVariants}
-              transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
-              onClick={() => onToggleService(label)}
-              whileTap={{ scale: 0.97 }}
-              className={`flex items-center gap-3 px-4 py-4 min-h-[48px] transition-all duration-200 cursor-pointer text-left ${
-                isActive
-                  ? "border border-[oklch(0.72_0.12_75)] bg-[#111111]"
-                  : "border border-transparent bg-[#111111]"
-              }`}
-            >
-              <Icon
-                className={`h-5 w-5 flex-shrink-0 transition-colors duration-200 ${
-                  isActive ? "text-[oklch(0.72_0.12_75)]" : "text-white/40"
-                }`}
-                strokeWidth={1.5}
-              />
-              <span
-                className={`font-heading text-sm leading-tight transition-colors duration-200 ${
-                  isActive ? "text-white" : "text-white/50"
+      {/* Verkstad */}
+      <div className="w-full mb-6">
+        <div className="flex items-center gap-2 mb-3">
+          <Wrench className="h-4 w-4 text-white/30" strokeWidth={1.5} />
+          <span className="font-heading text-xs tracking-wider uppercase text-white/30">
+            Verkstad
+          </span>
+        </div>
+        <motion.div
+          className="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full"
+          initial="hidden"
+          animate="visible"
+          transition={{ staggerChildren: 0.04 }}
+        >
+          {verkstadOptions.map(({ label, icon: Icon }) => {
+            const isActive = selectedServices.includes(label);
+            return (
+              <motion.button
+                key={label}
+                variants={cardVariants}
+                transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+                onClick={() => onToggleService(label)}
+                whileTap={{ scale: 0.97 }}
+                className={`flex items-center gap-3 px-4 py-4 min-h-[48px] transition-all duration-200 cursor-pointer text-left ${
+                  isActive
+                    ? "border border-[oklch(0.72_0.12_75)] bg-[#111111]"
+                    : "border border-transparent bg-[#111111]"
                 }`}
               >
-                {label}
-              </span>
-            </motion.button>
-          );
-        })}
-      </motion.div>
+                <Icon
+                  className={`h-5 w-5 flex-shrink-0 transition-colors duration-200 ${
+                    isActive ? "text-[oklch(0.72_0.12_75)]" : "text-white/40"
+                  }`}
+                  strokeWidth={1.5}
+                />
+                <span
+                  className={`font-heading text-sm leading-tight transition-colors duration-200 ${
+                    isActive ? "text-white" : "text-white/50"
+                  }`}
+                >
+                  {label}
+                </span>
+              </motion.button>
+            );
+          })}
+        </motion.div>
+      </div>
+
+      {/* Tvätt & Rekond */}
+      <div className="w-full">
+        <div className="flex items-center gap-2 mb-3">
+          <Droplets className="h-4 w-4 text-white/30" strokeWidth={1.5} />
+          <span className="font-heading text-xs tracking-wider uppercase text-white/30">
+            Tvätt &amp; Rekond
+          </span>
+        </div>
+        <motion.div
+          className="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full"
+          initial="hidden"
+          animate="visible"
+          transition={{ staggerChildren: 0.04, delayChildren: 0.4 }}
+        >
+          {tvattOptions.map(({ label, icon: Icon }) => {
+            const isActive = selectedServices.includes(label);
+            return (
+              <motion.button
+                key={label}
+                variants={cardVariants}
+                transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+                onClick={() => onToggleService(label)}
+                whileTap={{ scale: 0.97 }}
+                className={`flex items-center gap-3 px-4 py-4 min-h-[48px] transition-all duration-200 cursor-pointer text-left ${
+                  isActive
+                    ? "border border-[oklch(0.72_0.12_75)] bg-[#111111]"
+                    : "border border-transparent bg-[#111111]"
+                }`}
+              >
+                <Icon
+                  className={`h-5 w-5 flex-shrink-0 transition-colors duration-200 ${
+                    isActive ? "text-[oklch(0.72_0.12_75)]" : "text-white/40"
+                  }`}
+                  strokeWidth={1.5}
+                />
+                <span
+                  className={`font-heading text-sm leading-tight transition-colors duration-200 ${
+                    isActive ? "text-white" : "text-white/50"
+                  }`}
+                >
+                  {label}
+                </span>
+              </motion.button>
+            );
+          })}
+        </motion.div>
+      </div>
 
       {/* Desktop nav */}
       <div className="hidden md:flex justify-between w-full pt-10">

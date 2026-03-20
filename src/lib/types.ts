@@ -7,6 +7,9 @@ export interface Service {
   icon: string;
   is_visible: boolean;
   sort_order: number;
+  category: "verkstad" | "tvatt_rekond";
+  price: string | null;
+  is_addon: boolean;
   created_at: string;
   updated_at: string;
 }

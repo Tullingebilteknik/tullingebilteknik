@@ -5,18 +5,31 @@ import { AnimatePresence, motion } from "framer-motion";
 import { ProgressSteps } from "@/components/ui/progress-steps";
 import { createClient } from "@/lib/supabase/client";
 
-const serviceOptions = [
-  "Service & underhåll",
-  "Bromsar",
-  "Däck & hjul",
-  "AC-service",
-  "Felsökning & diagnostik",
-  "Besiktningsförberedelse",
-  "Oljebyte",
-  "Avgassystem",
-  "Koppling & växellåda",
-  "Elektronik & elsystem",
-  "Övrigt",
+const serviceCategories = [
+  {
+    label: "Verkstad",
+    options: [
+      "Service & underhåll",
+      "Bromsar",
+      "Däck & hjul",
+      "AC-service",
+      "Felsökning & diagnostik",
+      "Besiktningsförberedelse",
+      "Oljebyte",
+      "Avgassystem",
+      "Koppling & växellåda",
+      "Elektronik & elsystem",
+      "Övrigt",
+    ],
+  },
+  {
+    label: "Tvätt & Rekond",
+    options: [
+      "Utvändig tvätt",
+      "Utvändig tvätt med lätt städ",
+      "Utvändig tvätt med invändig städ",
+    ],
+  },
 ];
 
 const steps = ["Fordon", "Tjänst", "Kontakt"];
@@ -218,19 +231,28 @@ export function DiagnosticWizard() {
               <p className="text-sm text-muted-foreground mb-6">
                 Vad behöver du hjälp med?
               </p>
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                {serviceOptions.map((service) => (
-                  <button
-                    key={service}
-                    onClick={() => setSelectedService(service)}
-                    className={`rounded-lg px-4 py-3 text-left border transition-all duration-200 ${
-                      selectedService === service
-                        ? "border-primary bg-primary/5 text-foreground shadow-sm"
-                        : "border-border bg-white text-muted-foreground hover:text-foreground hover:border-primary/30"
-                    }`}
-                  >
-                    <span className="font-heading text-sm font-600">{service}</span>
-                  </button>
+              <div className="space-y-6">
+                {serviceCategories.map((cat) => (
+                  <div key={cat.label}>
+                    <p className="text-xs font-heading font-600 uppercase tracking-wider text-muted-foreground/60 mb-2">
+                      {cat.label}
+                    </p>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                      {cat.options.map((service) => (
+                        <button
+                          key={service}
+                          onClick={() => setSelectedService(service)}
+                          className={`rounded-lg px-4 py-3 text-left border transition-all duration-200 ${
+                            selectedService === service
+                              ? "border-primary bg-primary/5 text-foreground shadow-sm"
+                              : "border-border bg-white text-muted-foreground hover:text-foreground hover:border-primary/30"
+                          }`}
+                        >
+                          <span className="font-heading text-sm font-600">{service}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
                 ))}
               </div>
               <div className="flex justify-between pt-6">
