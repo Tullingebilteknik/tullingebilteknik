@@ -290,7 +290,7 @@ export function TjansterContent({
     <>
       {/* Verkstad */}
       <section className="py-16 sm:py-24 bg-muted tech-surface relative">
-        <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
           <ScrollReveal>
             <div className="mb-10">
               <div className="flex items-center gap-3 mb-3">
@@ -309,11 +309,9 @@ export function TjansterContent({
             </div>
           </ScrollReveal>
 
-          <ScrollReveal stagger={0.06}>
+          <ScrollReveal stagger={0.06} className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             {verkstadServices.map((service, i) => (
-              <div key={service.id} className="mb-4">
-                <ServiceCard service={service} index={i} />
-              </div>
+              <ServiceCard key={service.id} service={service} index={i} />
             ))}
           </ScrollReveal>
         </div>
@@ -322,7 +320,7 @@ export function TjansterContent({
       {/* Tvätt & Rekond */}
       {(washMain.length > 0 || washAddons.length > 0) && (
         <section className="py-16 sm:py-24 bg-white relative">
-          <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
+          <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
             <ScrollReveal>
               <div className="mb-10">
                 <div className="flex items-center gap-3 mb-3">
