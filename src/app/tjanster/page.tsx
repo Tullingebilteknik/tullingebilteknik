@@ -6,6 +6,8 @@ import { TjansterContent } from "@/components/sections/TjansterContent";
 import { createClient } from "@/lib/supabase/server";
 import type { Service } from "@/lib/types";
 import { ScrollReveal } from "@/components/animation/ScrollReveal";
+import Link from "next/link";
+import { Phone, Star, Wrench as WrenchIcon, Clock, Users } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
@@ -46,10 +48,42 @@ export default async function TjansterPage() {
               <p className="mt-4 text-white/50 max-w-2xl mx-auto">
                 Från mekanisk expertis till skonsam handtvätt — allt din bil behöver under ett och samma tak.
               </p>
+              <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-4">
+                <Link
+                  href="/#boka"
+                  className="btn-hero inline-flex items-center gap-2 px-7 py-3 rounded-full font-heading font-600 text-sm"
+                >
+                  Boka service
+                </Link>
+                <a
+                  href="tel:087786050"
+                  className="inline-flex items-center gap-2 text-white/60 hover:text-white transition-colors font-heading text-sm"
+                >
+                  <Phone className="h-4 w-4" />
+                  08-778 60 50
+                </a>
+              </div>
             </ScrollReveal>
           </div>
           {/* Sentinel for sticky CTA visibility */}
           <div id="tjanster-hero-end" className="absolute bottom-0 left-0 h-1 w-full" />
+        </section>
+
+        {/* Trust bar */}
+        <section className="py-6 border-b border-border/50 bg-white">
+          <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 flex flex-wrap items-center justify-center gap-x-10 gap-y-3">
+            {[
+              { icon: Star, text: "4.9 ★ Google" },
+              { icon: Users, text: "500+ nöjda kunder" },
+              { icon: WrenchIcon, text: "Alla bilmärken" },
+              { icon: Clock, text: "Svar samma dag" },
+            ].map(({ icon: Icon, text }) => (
+              <div key={text} className="flex items-center gap-2 text-sm text-muted-foreground">
+                <Icon className="h-4 w-4 text-primary" strokeWidth={1.5} />
+                <span className="font-heading font-500">{text}</span>
+              </div>
+            ))}
+          </div>
         </section>
 
         <TjansterContent

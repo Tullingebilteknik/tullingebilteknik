@@ -76,11 +76,6 @@ function ServiceCard({
                 </h2>
               </div>
               <div className="flex items-center gap-3 shrink-0">
-                {service.price && (
-                  <span className="font-mono text-base sm:text-lg font-600 text-primary whitespace-nowrap">
-                    {service.price}
-                  </span>
-                )}
                 {/* Mobile accordion toggle */}
                 <button
                   onClick={() => setOpen(!open)}
@@ -96,6 +91,13 @@ function ServiceCard({
                 </button>
               </div>
             </div>
+
+            {/* Price */}
+            {service.price && (
+              <span className="inline-block font-mono text-lg font-700 text-primary mt-1">
+                {service.price}
+              </span>
+            )}
 
             {/* Short description (always visible) */}
             <p className="text-sm text-muted-foreground mt-1 lg:hidden">
@@ -125,10 +127,10 @@ function ServiceCard({
             </AnimatePresence>
 
             {/* CTAs — always visible */}
-            <div className="flex items-center gap-4 mt-3">
+            <div className="flex items-center gap-4 mt-4">
               <Link
                 href={`/?service=${encodeURIComponent(service.slug)}#boka`}
-                className="inline-flex items-center gap-1.5 text-sm font-600 text-primary hover:text-primary/80 transition-colors"
+                className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-primary text-primary-foreground text-sm font-600 hover:bg-primary/90 transition-colors shadow-sm"
               >
                 Boka tjänst
                 <ArrowRight className="h-3.5 w-3.5" />
@@ -190,7 +192,7 @@ function WashCard({
         <div className="flex items-center justify-center gap-4">
           <Link
             href={`/?service=${encodeURIComponent(service.slug)}#boka`}
-            className="inline-flex items-center gap-1.5 text-sm font-600 text-primary hover:text-primary/80 transition-colors"
+            className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-primary text-primary-foreground text-sm font-600 hover:bg-primary/90 transition-colors shadow-sm"
           >
             Boka tvätt
             <ArrowRight className="h-3.5 w-3.5" />
@@ -228,6 +230,12 @@ function AddonItem({ service }: { service: Service }) {
           {service.price}
         </span>
       )}
+      <Link
+        href={`/?service=${encodeURIComponent(service.slug)}#boka`}
+        className="text-xs font-600 text-primary hover:text-primary/80 transition-colors whitespace-nowrap shrink-0 hidden sm:inline"
+      >
+        Boka
+      </Link>
     </div>
   );
 }
@@ -300,11 +308,11 @@ export function TjansterContent({
                 </span>
               </div>
               <h2 className="font-heading text-2xl sm:text-3xl font-700 text-foreground">
-                Mekaniska tjänster
+                Service &amp; reparation — alla bilmärken
               </h2>
               <div className="w-12 h-0.5 bg-primary mt-4" />
               <p className="mt-4 text-muted-foreground max-w-xl">
-                Service, reparationer och diagnostik utförda av erfarna biltekniker.
+                Certifierade biltekniker med modern diagnostik. Vi servar och reparerar alla märken — från rutinservice till komplexa felsökningar.
               </p>
             </div>
           </ScrollReveal>
@@ -330,11 +338,11 @@ export function TjansterContent({
                   </span>
                 </div>
                 <h2 className="font-heading text-2xl sm:text-3xl font-700 text-foreground">
-                  Biltvätt &amp; städning
+                  Professionell biltvätt — utan att röra lacken
                 </h2>
                 <div className="w-12 h-0.5 bg-primary mt-4" />
                 <p className="mt-4 text-muted-foreground max-w-xl">
-                  Professionell handtvätt och städning — från snabb utvändig tvätt till komplett in- och utvändig behandling.
+                  Kontaktlös tvätt med högtryck och skum — ingen borste, svamp eller trasa berör lacken. Från snabb utvändig tvätt till komplett in- och utvändig behandling.
                 </p>
               </div>
             </ScrollReveal>
