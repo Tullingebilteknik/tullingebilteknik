@@ -35,6 +35,19 @@ const EDGES: { from: LeadState; to: LeadState }[] = [
   { from: "TO_BE_CONTACTED", to: "NO_DEAL" },
 ];
 
+/* ── Source page labels ───────────────────────── */
+
+const sourceLabels: Record<string, string> = {
+  kontakt: "Kontaktsidan",
+  "diagnostic-wizard": "Felsökningsguiden",
+  "service-configurator": "Bokningsformuläret",
+};
+
+function sourcePageLabel(source: string): string {
+  if (!source) return "Okänd";
+  return sourceLabels[source] || source;
+}
+
 /* ── Helpers ───────────────────────────────────── */
 
 const monthNames = [
@@ -270,7 +283,7 @@ export default function LeadStatistikPage() {
   const sourceStats = useMemo(() => {
     const map = new Map<string, { total: number; affar: number; value: number }>();
     for (const l of leads) {
-      const src = l.source_page || "okänd";
+      const src = sourcePageLabel(l.source_page);
       if (!map.has(src)) map.set(src, { total: 0, affar: 0, value: 0 });
       const entry = map.get(src)!;
       entry.total++;

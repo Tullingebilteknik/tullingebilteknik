@@ -105,11 +105,11 @@ export function Footer() {
             <div className="font-mono text-xs space-y-0">
               <div className="flex justify-between text-white/50 py-2.5 border-b border-white/5">
                 <span>MÅN–FRE</span>
-                <span className="text-white font-500">07:00–17:00</span>
+                <span className="text-white font-500">08:00–16:00</span>
               </div>
               <div className="flex justify-between text-white/50 py-2.5 border-b border-white/5">
                 <span>LÖRDAG</span>
-                <span className="text-white font-500">09:00–14:00</span>
+                <span className="text-white font-500">Stängt</span>
               </div>
               <div className="flex justify-between text-white/50 py-2.5">
                 <span>SÖNDAG</span>

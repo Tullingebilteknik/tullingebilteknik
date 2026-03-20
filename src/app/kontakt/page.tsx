@@ -88,11 +88,11 @@ export default function KontaktPage() {
                       <div className="space-y-1.5 font-mono text-xs">
                         <div className="flex justify-between text-muted-foreground">
                           <span>MÅN–FRE</span>
-                          <span className="text-foreground font-500">07:00–17:00</span>
+                          <span className="text-foreground font-500">08:00–16:00</span>
                         </div>
                         <div className="flex justify-between text-muted-foreground">
                           <span>LÖRDAG</span>
-                          <span className="text-foreground font-500">09:00–14:00</span>
+                          <span className="text-foreground font-500">Stängt</span>
                         </div>
                         <div className="flex justify-between text-muted-foreground">
                           <span>SÖNDAG</span>
@@ -107,7 +107,7 @@ export default function KontaktPage() {
                 <div className="rounded-xl overflow-hidden shadow-sm border border-border/50">
                   <iframe
                     title="Tullinge Bilteknik karta"
-                    src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d8175.5!2d17.9!3d59.2!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2sTullinge!5e0!3m2!1ssv!2sse!4v1600000000000"
+                    src="https://maps.google.com/maps?q=Mekanikerv%C3%A4gen+3%2C+146+33+Tullinge&t=&z=15&ie=UTF8&iwloc=&output=embed"
                     className="w-full h-64"
                     loading="lazy"
                     referrerPolicy="no-referrer-when-downgrade"

@@ -76,6 +76,19 @@ const methodIcons: Record<string, typeof PhoneCall> = {
   email: Send,
 };
 
+/* ── Source page labels ───────────────────────── */
+
+const sourceLabels: Record<string, string> = {
+  kontakt: "Kontaktsidan",
+  "diagnostic-wizard": "Felsökningsguiden",
+  "service-configurator": "Bokningsformuläret",
+};
+
+function sourcePageLabel(source: string): string {
+  if (!source) return "—";
+  return sourceLabels[source] || source;
+}
+
 /* ── Date helpers ──────────────────────────────── */
 
 const monthNames = [
@@ -978,7 +991,7 @@ function LeadDetailDialog({
             )}
             <div>
               <p className="text-slate-500 text-xs mb-0.5">Källa</p>
-              <p className="font-medium">{lead.source_page || "—"}</p>
+              <p className="font-medium">{sourcePageLabel(lead.source_page)}</p>
             </div>
           </div>
 
