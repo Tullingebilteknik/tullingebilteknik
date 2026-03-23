@@ -23,7 +23,7 @@ export function Footer() {
             </p>
             <div className="flex gap-4 mt-6">
               <a
-                href="https://facebook.com/tullingebilteknik"
+                href="https://www.facebook.com/Tullingebilteknik"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-white/30 hover:text-white transition-colors"
@@ -34,7 +34,7 @@ export function Footer() {
                 </svg>
               </a>
               <a
-                href="https://instagram.com/tullingebilteknik"
+                href="https://www.instagram.com/tullingebilteknik/"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-white/30 hover:text-white transition-colors"
