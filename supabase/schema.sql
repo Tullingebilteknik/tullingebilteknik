@@ -97,8 +97,11 @@ create table public.leads (
   notes text,
   source_page text not null default '',
   landing_page text,
-  created_at timestamptz not null default now()
+  created_at timestamptz not null default now(),
+  deleted_at timestamptz
 );
+
+create index idx_leads_not_deleted on public.leads (deleted_at) where deleted_at is null;
 
 alter table public.leads enable row level security;
 

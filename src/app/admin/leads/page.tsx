@@ -388,6 +388,7 @@ export default function AdminLeadsPage() {
       const { data } = await supabase
         .from("leads")
         .select("*")
+        .is("deleted_at", null)
         .order("created_at", { ascending: false });
       return (data ?? []) as Lead[];
     },
@@ -515,6 +516,27 @@ export default function AdminLeadsPage() {
     },
   });
 
+  const deleteLeadMutation = useMutation({
+    mutationFn: async (leadId: string) => {
+      const { error: bookingError } = await supabase.from("bookings").delete().eq("lead_id", leadId);
+      if (bookingError) throw bookingError;
+      const { error: leadError } = await supabase
+        .from("leads")
+        .update({ deleted_at: new Date().toISOString() })
+        .eq("id", leadId);
+      if (leadError) throw leadError;
+    },
+    onMutate: async (leadId) => {
+      await queryClient.cancelQueries({ queryKey: ["leads"] });
+      const prev = queryClient.getQueryData<Lead[]>(["leads"]);
+      queryClient.setQueryData<Lead[]>(["leads"], (old) => old?.filter((l) => l.id !== leadId) ?? []);
+      return { prev };
+    },
+    onError: (_err, _vars, context) => {
+      if (context?.prev) queryClient.setQueryData(["leads"], context.prev);
+    },
+  });
+
   /* ── Callbacks ───────────────────────────── */
 
   const updateStatus = useCallback(
@@ -554,6 +576,14 @@ export default function AdminLeadsPage() {
       deleteAttemptMutation.mutate({ attemptId, leadId: selectedLeadId });
     },
     [selectedLeadId, deleteAttemptMutation]
+  );
+
+  const handleDeleteLead = useCallback(
+    (leadId: string) => {
+      deleteLeadMutation.mutate(leadId);
+      setSelectedLeadId(null);
+    },
+    [deleteLeadMutation]
   );
 
   const openLead = useCallback((lead: Lead) => {
@@ -863,6 +893,7 @@ export default function AdminLeadsPage() {
           onUpdateStatus={(status) => updateStatus(selectedLead.id, status)}
           onLogAttempt={logContactAttempt}
           onDeleteAttempt={deleteContactAttempt}
+          onDeleteLead={handleDeleteLead}
           onBookLead={() => {
             setBookingLead(selectedLead);
             setSelectedLeadId(null);
@@ -901,6 +932,7 @@ function LeadDetailDialog({
   onUpdateStatus,
   onLogAttempt,
   onDeleteAttempt,
+  onDeleteLead,
   onBookLead,
   autoSaveNotes,
   autoSaveDealValue,
@@ -919,12 +951,14 @@ function LeadDetailDialog({
   onUpdateStatus: (status: string) => void;
   onLogAttempt: (method: "phone" | "sms" | "email") => void;
   onDeleteAttempt: (id: string) => void;
+  onDeleteLead: (id: string) => void;
   onBookLead: () => void;
   autoSaveNotes: (val: string) => void;
   autoSaveDealValue: (val: string) => void;
 }) {
   const notesSaved = useAutoSave(notes, autoSaveNotes);
   const dealSaved = useAutoSave(dealValue, autoSaveDealValue);
+  const [confirmDelete, setConfirmDelete] = useState(false);
 
   return (
     <Dialog open onOpenChange={(open) => !open && onClose()}>
@@ -1164,6 +1198,40 @@ function LeadDetailDialog({
                 >
                   <CalendarPlus className="h-4 w-4 mr-1" />
                   Boka in
+                </Button>
+              </div>
+            )}
+          </div>
+
+          {/* ── Radera lead ─────────────────── */}
+          <div className="border-t pt-4">
+            {!confirmDelete ? (
+              <button
+                onClick={() => setConfirmDelete(true)}
+                className="flex items-center gap-1.5 text-xs text-slate-400 hover:text-red-600 transition-colors"
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+                Radera lead
+              </button>
+            ) : (
+              <div className="flex items-center gap-3">
+                <p className="text-xs text-slate-600 flex-1">
+                  Är du säker? Bokning raderas också.
+                </p>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="h-7 text-xs text-slate-500"
+                  onClick={() => setConfirmDelete(false)}
+                >
+                  Avbryt
+                </Button>
+                <Button
+                  size="sm"
+                  className="h-7 text-xs bg-red-600 hover:bg-red-700 text-white"
+                  onClick={() => onDeleteLead(lead.id)}
+                >
+                  Ja, radera
                 </Button>
               </div>
             )}

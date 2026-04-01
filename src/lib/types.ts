@@ -48,6 +48,7 @@ export interface Lead {
   preferred_time: string | null;
   deal_value: number | null;
   landing_page: string | null;
+  deleted_at: string | null;
 }
 
 export interface ContactAttempt {
